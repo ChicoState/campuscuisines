@@ -1,0 +1,30 @@
+# Python and test tooling
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+.pytest_cache/
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+reports/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Docker and local service state
+.docker/
+postgres_data/
+minio_data/
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,24 @@
+[tool.ruff]
+target-version = "py313"
+extend-exclude = [".agents", ".venv", "reports"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "S"]
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
+exclude = [".agents", ".venv", "reports"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.coverage.run]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true

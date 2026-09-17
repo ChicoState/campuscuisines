@@ -1,0 +1,16 @@
+.git
+.github
+.agents
+.venv
+__pycache__
+.pytest_cache
+.ruff_cache
+.pyright
+reports
+htmlcov
+.coverage*
+.env*
+tests
+README.md
+AGENTS.md
+infrastructure_plan.md
