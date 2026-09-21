@@ -7,9 +7,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 COPY requirements.txt ./
-RUN python -m pip install --require-hashes -r requirements.txt
+RUN python -m pip install --require-hashes -r requirements.txt \
+    && python -m pip uninstall --yes pip
 
-FROM python:3.13-slim AS runtime
+FROM dependencies AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -17,7 +18,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN groupadd --system app && useradd --system --gid app --create-home app
 WORKDIR /app
-COPY --from=dependencies /usr/local /usr/local
 COPY --chown=app:app . ./
 USER app
 EXPOSE 8080
