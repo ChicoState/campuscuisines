@@ -10,7 +10,7 @@ boto3==1.43.96
 pip-tools==7.6.1
 pytest==9.0.3
 pytest-django==4.14.0
-pytest-cov==6.3.0
+pytest-cov==7.1.0
 playwright==1.63.0
 ruff==0.16.8
 pyright==1.1.414
