@@ -1,0 +1,18 @@
+# Runtime dependencies. Exact resolved versions and hashes are in requirements.txt.
+Django==5.2.17
+gunicorn==23.0.0
+whitenoise==6.12.0
+psycopg[binary]==3.3.5
+django-storages[s3]==1.14.6
+boto3==1.43.96
+
+# Development and CI tooling.
+pip-tools==7.6.1
+pytest==9.0.3
+pytest-django==4.14.0
+pytest-cov==6.3.0
+playwright==1.63.0
+ruff==0.16.8
+pyright==1.1.414
+bandit==1.9.4
+pip-audit==2.10.1
