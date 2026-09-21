@@ -8,7 +8,7 @@ boto3==1.43.96
 
 # Development and CI tooling.
 pip-tools==7.6.1
-pytest==9.0.3
+pytest==9.1.1
 pytest-django==4.14.0
 pytest-cov==6.3.0
 playwright==1.63.0
