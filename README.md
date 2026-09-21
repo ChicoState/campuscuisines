@@ -80,3 +80,5 @@ The `pip<26` bootstrap is required because the selected generator is not compati
 ## Future GitHub and cloud prerequisites
 
 Before a real release can run, configure the `production` GitHub environment, its approval rules, `GCP_PROJECT_ID`, `GCP_REGION`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, and `GCP_SERVICE_ACCOUNT` repository variables, GitHub-to-Google workload identity federation, Google Cloud billing/project permissions, and runtime secrets such as `DJANGO_SECRET_KEY`, `DATABASE_URL`, and object-storage credentials. The release workflow intentionally fails before authentication or deployment until the Django project and those prerequisites exist.
+
+The pull-request secret scan uses Gitleaks v3. If this repository is owned by a GitHub organization, obtain a Gitleaks license and save it in **Settings → Secrets and variables → Actions** as the repository or organization secret `GITLEAKS_LICENSE`; do not place the license in this repository. Personal-account repositories do not require that secret.

@@ -160,6 +160,7 @@ These are developer-workstation prerequisites that will not be supplied by the p
 | `DJANGO_SECRET_KEY` | Cloud secret | Django cryptographic signing key injected at runtime |
 | `DATABASE_URL` | Cloud secret | Production PostgreSQL connection string injected at runtime |
 | `OBJECT_STORAGE_*` | Cloud secrets | Bucket endpoint/name as applicable and access credentials, preferably workload identity |
+| `GITLEAKS_LICENSE` | Repository or organization secret | Required by the Gitleaks Action when this repository belongs to a GitHub organization; never commit the license value |
 | Google Cloud project and billing account | Provider account | Enable Cloud Run, Artifact Registry, managed PostgreSQL, object storage, and secret management |
 | GitHub Advanced Security availability | GitHub account/entitlement | Enable CodeQL code-scanning results where required by repository policy |
 
