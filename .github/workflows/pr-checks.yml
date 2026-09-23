@@ -84,8 +84,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run Gitleaks CLI via Docker
-          run: |
-            docker run --rm -v ${{ github.workspace }}:/path ghcr.io/gitleaks/gitleaks:latest detect --source=/path --verbose
+          run: docker run --rm -v ${{ github.workspace }}:/path ghcr.io/gitleaks/gitleaks:latest detect --source=/path --verbose
 
   codeql:
     name: CodeQL
