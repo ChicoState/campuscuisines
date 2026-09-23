@@ -61,7 +61,7 @@ jobs:
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v3
       - name: Build, scan, publish, migrate, and deploy
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
