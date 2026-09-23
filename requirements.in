@@ -4,7 +4,7 @@ gunicorn==23.0.0
 whitenoise==6.12.0
 psycopg[binary]==3.3.5
 django-storages[s3]==1.14.6
-boto3==1.43.96
+boto3==1.43.98
 
 # Development and CI tooling.
 pip-tools==7.6.1
