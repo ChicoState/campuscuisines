@@ -6,7 +6,7 @@ Campus Cuisines is planned as a Django web application for campus-food content. 
 
 | Path | Purpose |
 | --- | --- |
-| `requirements.in`, `requirements.txt`, `pyproject.toml` | Python 3.13 dependency inputs, locked dependencies, and quality-tool configuration |
+| `requirements.in`, `requirements.txt`, `requirements-dev.in`, `requirements-dev.txt`, `pyproject.toml` | Python 3.13 runtime/development dependency inputs, hash-locked dependencies, and quality-tool configuration |
 | `compose.yml`, `Dockerfile` | Local PostgreSQL/MinIO services and the future non-root Django/Gunicorn image |
 | `scripts/` | Infrastructure verification and Docker-backed smoke test |
 | `tests/infrastructure/` | Configuration-only test harness |
@@ -24,7 +24,7 @@ Campus Cuisines is planned as a Django web application for campus-food content. 
    ```sh
    python3.13 -m venv .venv
    . .venv/bin/activate
-   python -m pip install --require-hashes -r requirements.txt
+   python -m pip install --require-hashes -r requirements-dev.txt
    ```
 
 5. Run non-Docker checks:
@@ -43,7 +43,7 @@ Campus Cuisines is planned as a Django web application for campus-food content. 
    ./scripts/smoke.sh
    ```
 
-The Docker image installs all locked dependencies and runs as a non-root user, but it intentionally cannot start until product work adds a Django WSGI module. Django’s WSGI server needs an application callable and settings module, so this foundation does not fabricate one. See the [Django WSGI deployment documentation](https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/).
+The Docker image installs only the runtime lock file and runs as a non-root user, but it intentionally cannot start until product work adds a Django WSGI module. Django’s WSGI server needs an application callable and settings module, so this foundation does not fabricate one. See the [Django WSGI deployment documentation](https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/).
 
 ## Common commands
 
@@ -68,11 +68,11 @@ When application code exists, CI will run Django checks, the full pytest suite, 
 
 ## Updating dependencies
 
-The lock was generated with `pip-tools` on Python 3.13. To deliberately update it, run this controlled command and review the resulting diff:
+The locks are generated with `pip-tools==7.6.1` on Python 3.13. To deliberately update them, run this controlled command and review the resulting diff:
 
 ```sh
 docker run --rm -v "$PWD:/workspace" -w /workspace python:3.13-slim \
-  sh -c "pip install 'pip<26' pip-tools==7.5.2 && pip-compile --generate-hashes --allow-unsafe -o requirements.txt requirements.in"
+  sh -c "pip install 'pip<26' pip-tools==7.6.1 && pip-compile --generate-hashes --allow-unsafe -o requirements.txt requirements.in && pip-compile --generate-hashes --allow-unsafe -o requirements-dev.txt requirements-dev.in"
 ```
 
 The `pip<26` bootstrap is required because the selected generator is not compatible with pip 26. GitHub Actions uses `setup-python`’s pip cache, as described in [GitHub’s dependency-caching documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching).

@@ -53,8 +53,8 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-          cache-dependency-path: requirements.txt
-      - run: python -m pip install --require-hashes -r requirements.txt
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install --require-hashes -r requirements-dev.txt
       - run: ruff format --check . && ruff check . && pyright && bandit -q -r . && pip-audit --local
       - run: pytest --cov --cov-report=xml:reports/coverage.xml
       - uses: google-github-actions/auth@v2

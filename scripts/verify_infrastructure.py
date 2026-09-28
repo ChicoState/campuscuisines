@@ -10,6 +10,8 @@ REQUIRED_FILES = (
     ".python-version",
     "requirements.in",
     "requirements.txt",
+    "requirements-dev.in",
+    "requirements-dev.txt",
     "pyproject.toml",
     "Dockerfile",
     "compose.yml",

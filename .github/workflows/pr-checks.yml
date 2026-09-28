@@ -24,9 +24,9 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: requirements-dev.txt
       - name: Install hash-locked dependencies
-        run: python -m pip install --require-hashes -r requirements.txt
+        run: python -m pip install --require-hashes -r requirements-dev.txt
       - name: Verify infrastructure-owned files
         run: python scripts/verify_infrastructure.py
       - name: Check formatting
