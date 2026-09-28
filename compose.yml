@@ -1,6 +1,27 @@
 name: campus-cuisines
 
 services:
+  web:
+    build:
+      context: .
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://campuscuisines:change-this-local-only@postgres:5432/campuscuisines}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-replace-with-a-local-secret}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks: [development]
+
   postgres:
     image: postgres:17.4-alpine
     environment:

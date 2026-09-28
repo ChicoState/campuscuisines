@@ -5,14 +5,21 @@ extend-exclude = [".agents", ".venv", "reports"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "S"]
 
+[tool.ruff.lint.per-file-ignores]
+"accounts/migrations/*.py" = ["E501"]
+"tests/**/*.py" = ["S101"]
+
 [tool.pyright]
 pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
 typeCheckingMode = "basic"
-exclude = [".agents", ".venv", "reports"]
+exclude = [".agents", ".venv", "accounts/migrations", "reports"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+DJANGO_SETTINGS_MODULE = "config.settings"
 addopts = "-ra"
 
 [tool.coverage.run]

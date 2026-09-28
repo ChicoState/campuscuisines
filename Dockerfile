@@ -25,6 +25,4 @@ COPY --chown=app:app . ./
 USER app
 EXPOSE 8080
 
-# Product implementation must provide the WSGI module. The image intentionally
-# has no application entrypoint until that work begins.
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} ${DJANGO_WSGI_MODULE:?Set DJANGO_WSGI_MODULE to your_project.wsgi}"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} config.wsgi"]

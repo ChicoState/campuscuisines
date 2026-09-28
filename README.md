@@ -1,6 +1,6 @@
 # Campus Cuisines
 
-Campus Cuisines is planned as a Django web application for campus-food content. This repository currently contains a verified development foundation; production application code, Django settings, routes, models, migrations, and user workflows have not been created.
+Campus Cuisines is a Django web application foundation for campus-food content. It includes a public home page, initial application settings, and a deliberately minimal custom user model. Food-content workflows and account experiences have not been designed or implemented yet.
 
 ## Repository map
 
@@ -12,7 +12,10 @@ Campus Cuisines is planned as a Django web application for campus-food content. 
 | `tests/infrastructure/` | Configuration-only test harness |
 | `.github/workflows/` | Pull-request checks and guarded future Cloud Run release workflow |
 | `.agents/skills/` | Repository-specific agent workflows |
-| `frontend/`, application package, API, docs | Not created yet |
+| `config/` | Django settings, routes, and WSGI/ASGI entry points |
+| `accounts/` | Initial custom Django user model and migration |
+| `core/`, `templates/`, `static/` | Public homepage and browser assets |
+| `docs/` | Living implementation specifications and plans |
 
 ## Getting started
 
@@ -27,23 +30,31 @@ Campus Cuisines is planned as a Django web application for campus-food content. 
    python -m pip install --require-hashes -r requirements-dev.txt
    ```
 
-5. Run non-Docker checks:
+5. Start the local application. Compose runs the application, PostgreSQL, and MinIO; it applies local migrations before starting Django:
+
+   ```sh
+   docker compose up --build web
+   ```
+
+   Open <http://localhost:8000/> in a browser. Stop the services and remove their disposable local data with `docker compose down --volumes --remove-orphans`.
+
+6. Run non-Docker checks:
 
    ```sh
    python scripts/verify_infrastructure.py
    ruff format --check .
    ruff check .
    pyright
-   pytest tests/infrastructure
+   pytest
    ```
 
-6. Run the local-service smoke test. It starts PostgreSQL and MinIO, verifies readiness, then removes the containers and named volumes:
+7. Run the local-service smoke test. It starts PostgreSQL and MinIO, verifies readiness, then removes the containers and named volumes:
 
    ```sh
    ./scripts/smoke.sh
    ```
 
-The Docker image installs only the runtime lock file and runs as a non-root user, but it intentionally cannot start until product work adds a Django WSGI module. Django’s WSGI server needs an application callable and settings module, so this foundation does not fabricate one. See the [Django WSGI deployment documentation](https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/).
+The Docker image installs only the runtime lock file and runs as a non-root user. Compose overrides its production Gunicorn command with Django’s development server and bind-mounts the source code for local edits. See the [Django WSGI deployment documentation](https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/).
 
 ## Common commands
 
@@ -52,9 +63,9 @@ The Docker image installs only the runtime lock file and runs as a non-root user
 | `python scripts/verify_infrastructure.py` | Check required infrastructure files and core configuration |
 | `ruff format --check . && ruff check .` | Format and lint checks |
 | `pyright` | Type-check configured Python files |
-| `pytest tests/infrastructure` | Run the configuration-only test harness |
+| `pytest` | Run infrastructure and application tests |
 | `./scripts/smoke.sh` | Validate Compose services, then clean them up |
-| `docker compose up -d postgres minio` | Start local services during future application work |
+| `docker compose up --build web` | Start the local application, PostgreSQL, and MinIO at `http://localhost:8000/` |
 | `docker compose down --volumes --remove-orphans` | Stop services and delete local data |
 
 When application code exists, CI will run Django checks, the full pytest suite, 70% coverage enforcement, and Playwright journeys. Static files should use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
