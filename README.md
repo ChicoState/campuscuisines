@@ -64,6 +64,7 @@ The Docker image installs only the runtime lock file and runs as a non-root user
 | `ruff format --check . && ruff check .` | Format and lint checks |
 | `pyright` | Type-check configured Python files |
 | `pytest` | Run infrastructure and application tests |
+| `RUN_BROWSER_TESTS=true pytest -m browser` | Run the Chromium homepage smoke test after installing it with `playwright install --with-deps chromium` |
 | `./scripts/smoke.sh` | Validate Compose services, then clean them up |
 | `docker compose up --build web` | Start the local application, PostgreSQL, and MinIO at `http://localhost:8000/` |
 | `docker compose down --volumes --remove-orphans` | Stop services and delete local data |

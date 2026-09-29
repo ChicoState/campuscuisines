@@ -13,6 +13,24 @@ jobs:
   foundation:
     name: Python quality and infrastructure
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://campuscuisines:ci-only-password@localhost:5432/campuscuisines
+      DJANGO_DEBUG: "true"
+      DJANGO_SECRET_KEY: ci-only-not-a-production-secret
+    services:
+      postgres:
+        image: postgres:17.4-alpine
+        env:
+          POSTGRES_DB: campuscuisines
+          POSTGRES_USER: campuscuisines
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U campuscuisines -d campuscuisines"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,6 +67,12 @@ jobs:
           else
             .venv/bin/pytest tests/infrastructure
           fi
+      - name: Install Chromium for browser tests
+        run: .venv/bin/playwright install --with-deps chromium
+      - name: Run browser smoke test
+        env:
+          RUN_BROWSER_TESTS: "true"
+        run: .venv/bin/pytest -m browser
       - name: Upload coverage on failure
         if: failure() && hashFiles('reports/coverage.xml') != ''
         uses: actions/upload-artifact@v7
@@ -67,6 +91,23 @@ jobs:
       - uses: actions/checkout@v7
       - name: Build image
         run: docker build --tag campus-cuisines:pr .
+      - name: Verify production image serves collected static files
+        run: |
+          docker run --detach --rm --name campus-cuisines-pr \
+            --publish 127.0.0.1:8080:8080 \
+            --env DJANGO_DEBUG=false \
+            --env DJANGO_SECRET_KEY="$(openssl rand -hex 32)" \
+            --env DJANGO_ALLOWED_HOSTS=127.0.0.1 \
+            campus-cuisines:pr
+          trap 'docker logs campus-cuisines-pr; docker stop campus-cuisines-pr' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/ | grep --quiet 'Welcome to Campus Cuisines'; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/ | grep --quiet 'Welcome to Campus Cuisines'
+          curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/static/core/site.css | grep --quiet -- '--color-brand'
       - name: Scan image
         uses: aquasecurity/trivy-action@v0.36.0
         with:

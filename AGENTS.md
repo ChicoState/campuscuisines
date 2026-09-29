@@ -40,7 +40,7 @@ pytest
 
 CI runs the same infrastructure checks plus Bandit, pip-audit, Gitleaks, CodeQL, Docker image build/Trivy scanning, and—after application code is added—Django checks, full test coverage, and browser tests.
 
-`./scripts/smoke.sh` always cleans up with `docker compose down --volumes --remove-orphans`. For manual development, start only `postgres` and `minio`; stop them with the same cleanup command when finished. Named volumes hold disposable local data.
+`./scripts/smoke.sh` always cleans up with `docker compose down --volumes --remove-orphans`. For manual development, run `docker compose up --build web`; it starts the application with PostgreSQL and MinIO. Stop the local stack with the same cleanup command when finished. Named volumes hold disposable local data.
 
 ## Change checklist
 

@@ -21,6 +21,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 DJANGO_SETTINGS_MODULE = "config.settings"
 addopts = "-ra"
+markers = ["browser: requires a locally installed Chromium browser"]
 
 [tool.coverage.run]
 branch = true
