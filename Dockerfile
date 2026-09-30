@@ -22,6 +22,14 @@ RUN groupadd --system app && useradd --system --gid app --create-home app
 WORKDIR /app
 COPY --from=dependencies /install /usr/local
 COPY --chown=app:app . ./
+# pip is only needed to build this image. Removing it keeps its vendored
+# packages and packaging metadata out of the production runtime image.
+RUN rm -rf \
+    /usr/local/bin/pip \
+    /usr/local/bin/pip3 \
+    /usr/local/bin/pip3.13 \
+    /usr/local/lib/python3.13/site-packages/pip \
+    /usr/local/lib/python3.13/site-packages/pip-*.dist-info
 RUN install --directory --owner=app --group=app /app/staticfiles
 USER app
 RUN DJANGO_DEBUG=false \
