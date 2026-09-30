@@ -11,6 +11,11 @@ services:
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-replace-with-a-local-secret}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-local-minio-user}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-campus-cuisines-uploads}
+      OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:-http://minio:9000}
+      OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:-us-east-1}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-change-this-local-only}
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -20,6 +25,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     networks: [development]
 
   postgres:
@@ -57,6 +64,23 @@ services:
       timeout: 5s
       retries: 12
       start_period: 5s
+    networks: [development]
+
+  minio-init:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        && mc mb --ignore-existing "local/$$OBJECT_STORAGE_BUCKET"
+        && mc anonymous set none "local/$$OBJECT_STORAGE_BUCKET"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-local-minio-user}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change-this-local-only}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-campus-cuisines-uploads}
+    depends_on:
+      minio:
+        condition: service_healthy
     networks: [development]
 
 networks:

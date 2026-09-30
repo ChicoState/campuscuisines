@@ -113,13 +113,36 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": os.getenv(
+                "OBJECT_STORAGE_ACCESS_KEY",
+                os.getenv("MINIO_ROOT_USER", "local-minio-user"),
+            ),
+            "secret_key": os.getenv(
+                "OBJECT_STORAGE_SECRET_KEY",
+                os.getenv("MINIO_ROOT_PASSWORD", "change-this-local-only"),
+            ),
+            "bucket_name": os.getenv(
+                "OBJECT_STORAGE_BUCKET", "campus-cuisines-uploads"
+            ),
+            "endpoint_url": os.getenv("OBJECT_STORAGE_ENDPOINT", "http://minio:9000"),
+            "region_name": os.getenv("OBJECT_STORAGE_REGION", "us-east-1"),
+            "signature_version": "s3v4",
+            "addressing_style": "path",
+            "default_acl": None,
+            "querystring_auth": True,
+            "file_overwrite": False,
+        },
+    },
     "staticfiles": {
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
             if DEBUG
             else "whitenoise.storage.CompressedManifestStaticFilesStorage"
         )
-    }
+    },
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
