@@ -11,6 +11,8 @@ __pycache__/
 .coverage.*
 htmlcov/
 reports/
+db.sqlite3
+staticfiles/
 
 # Local configuration and credentials
 .env

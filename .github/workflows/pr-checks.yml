@@ -13,6 +13,24 @@ jobs:
   foundation:
     name: Python quality and infrastructure
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://campuscuisines:ci-only-password@localhost:5432/campuscuisines
+      DJANGO_DEBUG: "true"
+      DJANGO_SECRET_KEY: ci-only-not-a-production-secret
+    services:
+      postgres:
+        image: postgres:17.4-alpine
+        env:
+          POSTGRES_DB: campuscuisines
+          POSTGRES_USER: campuscuisines
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U campuscuisines -d campuscuisines"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v7
         with:
@@ -24,29 +42,37 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: requirements-dev.txt
       - name: Install hash-locked dependencies
-        run: python -m pip install --require-hashes -r requirements.txt
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes -r requirements-dev.txt
       - name: Verify infrastructure-owned files
-        run: python scripts/verify_infrastructure.py
+        run: .venv/bin/python scripts/verify_infrastructure.py
       - name: Check formatting
-        run: ruff format --check .
+        run: .venv/bin/ruff format --check .
       - name: Lint
-        run: ruff check .
+        run: .venv/bin/ruff check .
       - name: Type check
-        run: pyright
+        run: .venv/bin/pyright
       - name: Security lint
-        run: bandit -q -r scripts tests
+        run: .venv/bin/bandit -q -r scripts accounts config core
       - name: Audit Python dependencies
-        run: pip-audit --local
+        run: .venv/bin/pip-audit --local
       - name: Run available tests
         run: |
           if [ -f manage.py ]; then
-            python manage.py check
-            pytest --cov --cov-report=term-missing --cov-report=xml:reports/coverage.xml
+            .venv/bin/python manage.py check
+            .venv/bin/pytest --cov --cov-report=term-missing --cov-report=xml:reports/coverage.xml
           else
-            pytest tests/infrastructure
+            .venv/bin/pytest tests/infrastructure
           fi
+      - name: Install Chromium for browser tests
+        run: .venv/bin/playwright install --with-deps chromium
+      - name: Run browser smoke test
+        env:
+          RUN_BROWSER_TESTS: "true"
+        run: .venv/bin/pytest -m browser
       - name: Upload coverage on failure
         if: failure() && hashFiles('reports/coverage.xml') != ''
         uses: actions/upload-artifact@v7
@@ -65,6 +91,23 @@ jobs:
       - uses: actions/checkout@v7
       - name: Build image
         run: docker build --tag campus-cuisines:pr .
+      - name: Verify production image serves collected static files
+        run: |
+          docker run --detach --rm --name campus-cuisines-pr \
+            --publish 127.0.0.1:8080:8080 \
+            --env DJANGO_DEBUG=false \
+            --env DJANGO_SECRET_KEY="$(openssl rand -hex 32)" \
+            --env DJANGO_ALLOWED_HOSTS=127.0.0.1 \
+            campus-cuisines:pr
+          trap 'docker logs campus-cuisines-pr; docker stop campus-cuisines-pr' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/ | grep --quiet 'Welcome to Campus Cuisines'; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/ | grep --quiet 'Welcome to Campus Cuisines'
+          curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/static/core/site.css | grep --quiet -- '--color-brand'
       - name: Scan image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -84,7 +127,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run Gitleaks CLI via Docker
-        run: docker run --rm -v ${{ github.workspace }}:/path ghcr.io/gitleaks/gitleaks:latest detect --source=/path --verbose
+        run: docker run --rm -v ${{ github.workspace }}:/path ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f detect --source=/path --verbose
 
   codeql:
     name: CodeQL

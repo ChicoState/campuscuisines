@@ -1,18 +1,21 @@
 # Campus Cuisines
 
-Campus Cuisines is planned as a Django web application for campus-food content. This repository currently contains a verified development foundation; production application code, Django settings, routes, models, migrations, and user workflows have not been created.
+Campus Cuisines is a Django web application foundation for campus-food content. It includes a public home page, initial application settings, and a deliberately minimal custom user model. Food-content workflows and account experiences have not been designed or implemented yet.
 
 ## Repository map
 
 | Path | Purpose |
 | --- | --- |
-| `requirements.in`, `requirements.txt`, `pyproject.toml` | Python 3.13 dependency inputs, locked dependencies, and quality-tool configuration |
-| `compose.yml`, `Dockerfile` | Local PostgreSQL/MinIO services and the future non-root Django/Gunicorn image |
+| `requirements.in`, `requirements.txt`, `requirements-dev.in`, `requirements-dev.txt`, `pyproject.toml` | Python 3.13 runtime/development dependency inputs, hash-locked dependencies, and quality-tool configuration |
+| `compose.yml`, `Dockerfile` | Local Django/PostgreSQL/MinIO stack and non-root production Gunicorn image |
 | `scripts/` | Infrastructure verification and Docker-backed smoke test |
-| `tests/infrastructure/` | Configuration-only test harness |
+| `tests/` | Infrastructure, Django route/settings, and opt-in Chromium browser smoke tests |
 | `.github/workflows/` | Pull-request checks and guarded future Cloud Run release workflow |
 | `.agents/skills/` | Repository-specific agent workflows |
-| `frontend/`, application package, API, docs | Not created yet |
+| `config/` | Django settings, routes, and WSGI/ASGI entry points |
+| `accounts/` | Initial custom Django user model and migration |
+| `core/`, `templates/`, `static/` | Public homepage and browser assets |
+| `docs/` | Living implementation specifications and plans |
 
 ## Getting started
 
@@ -24,26 +27,51 @@ Campus Cuisines is planned as a Django web application for campus-food content. 
    ```sh
    python3.13 -m venv .venv
    . .venv/bin/activate
-   python -m pip install --require-hashes -r requirements.txt
+   python -m pip install --require-hashes -r requirements-dev.txt
    ```
 
-5. Run non-Docker checks:
+5. Start the local application. Compose runs the application, PostgreSQL, and MinIO; it applies local migrations before starting Django:
+
+   ```sh
+   docker compose up --build web
+   ```
+
+   Open <http://localhost:8000/> in a browser. Stop the services and remove their disposable local data with `docker compose down --volumes --remove-orphans`.
+
+6. Run the normal non-Docker checks. These use SQLite by default and skip the opt-in Chromium test:
 
    ```sh
    python scripts/verify_infrastructure.py
    ruff format --check .
    ruff check .
    pyright
-   pytest tests/infrastructure
+   python manage.py check
+   pytest
    ```
 
-6. Run the local-service smoke test. It starts PostgreSQL and MinIO, verifies readiness, then removes the containers and named volumes:
+7. To run the test suite against the same PostgreSQL engine used by Compose and CI, start PostgreSQL and set a host-reachable connection URL:
+
+   ```sh
+   docker compose up -d postgres
+   DATABASE_URL=postgresql://campuscuisines:change-this-local-only@127.0.0.1:5432/campuscuisines pytest --create-db
+   ```
+
+8. To run the Chromium browser smoke test, install the browser once, then opt in:
+
+   ```sh
+   python -m playwright install chromium
+   RUN_BROWSER_TESTS=true pytest -m browser
+   ```
+
+   On an Ubuntu machine missing browser libraries, use `python -m playwright install --with-deps chromium`; this may require administrator approval. CI installs Chromium and runs this test automatically.
+
+9. Run the local-service smoke test. It starts PostgreSQL and MinIO, verifies readiness, then removes the containers and named volumes:
 
    ```sh
    ./scripts/smoke.sh
    ```
 
-The Docker image installs all locked dependencies and runs as a non-root user, but it intentionally cannot start until product work adds a Django WSGI module. Django’s WSGI server needs an application callable and settings module, so this foundation does not fabricate one. See the [Django WSGI deployment documentation](https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/).
+The Docker image installs only the runtime lock file, collects fingerprinted static files with WhiteNoise, and runs as a non-root user. Compose overrides its production Gunicorn command with Django’s development server and bind-mounts the source code for local edits. Production must supply `DJANGO_DEBUG=false`, a real `DJANGO_SECRET_KEY`, `DATABASE_URL`, and appropriate `DJANGO_ALLOWED_HOSTS`; Cloud Run’s HTTPS proxy is supported through `X-Forwarded-Proto`. See the [Django WSGI deployment documentation](https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/).
 
 ## Common commands
 
@@ -52,27 +80,31 @@ The Docker image installs all locked dependencies and runs as a non-root user, b
 | `python scripts/verify_infrastructure.py` | Check required infrastructure files and core configuration |
 | `ruff format --check . && ruff check .` | Format and lint checks |
 | `pyright` | Type-check configured Python files |
-| `pytest tests/infrastructure` | Run the configuration-only test harness |
+| `python manage.py check` | Run Django system checks |
+| `pytest` | Run infrastructure and Django tests; browser tests skip unless opted in |
+| `DATABASE_URL=postgresql://campuscuisines:change-this-local-only@127.0.0.1:5432/campuscuisines pytest --create-db` | Run tests against local Compose PostgreSQL |
+| `RUN_BROWSER_TESTS=true pytest -m browser` | Run the Chromium homepage smoke test after `python -m playwright install chromium` |
 | `./scripts/smoke.sh` | Validate Compose services, then clean them up |
-| `docker compose up -d postgres minio` | Start local services during future application work |
+| `docker compose up --build web` | Start the local application, PostgreSQL, and MinIO at `http://localhost:8000/` |
 | `docker compose down --volumes --remove-orphans` | Stop services and delete local data |
 
-When application code exists, CI will run Django checks, the full pytest suite, 70% coverage enforcement, and Playwright journeys. Static files should use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
+CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, a Chromium homepage smoke test, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
 
 ## Troubleshooting
 
 - **Docker permission denied:** ensure Docker Desktop/Engine is running and your Linux user can access the Docker socket; then rerun `docker version`.
 - **Port 5432, 9000, or 9001 already in use:** stop the conflicting local service or change the corresponding host-port mapping in `compose.yml`.
+- **Browser test says Chromium is unavailable:** run `python -m playwright install chromium`; on Ubuntu, use the `--with-deps` command above if libraries are missing.
 - **Hash installation fails:** use Python 3.13 and do not edit `requirements.txt` by hand. Regenerate it only with the documented `pip-tools` command below.
 - **Local data needs resetting:** run `docker compose down --volumes --remove-orphans`. This deletes only Campus Cuisines’ named local service volumes.
 
 ## Updating dependencies
 
-The lock was generated with `pip-tools` on Python 3.13. To deliberately update it, run this controlled command and review the resulting diff:
+The locks are generated with `pip-tools==7.6.1` on Python 3.13. To deliberately update them, run this controlled command and review the resulting diff:
 
 ```sh
 docker run --rm -v "$PWD:/workspace" -w /workspace python:3.13-slim \
-  sh -c "pip install 'pip<26' pip-tools==7.5.2 && pip-compile --generate-hashes --allow-unsafe -o requirements.txt requirements.in"
+  sh -c "pip install 'pip<26' pip-tools==7.6.1 && pip-compile --generate-hashes --allow-unsafe -o requirements.txt requirements.in && pip-compile --generate-hashes --allow-unsafe -o requirements-dev.txt requirements-dev.in"
 ```
 
 The `pip<26` bootstrap is required because the selected generator is not compatible with pip 26. GitHub Actions uses `setup-python`’s pip cache, as described in [GitHub’s dependency-caching documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching).

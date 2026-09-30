@@ -10,6 +10,9 @@ reports
 htmlcov
 .coverage*
 .env*
+staticfiles/
+requirements-dev.in
+requirements-dev.txt
 tests
 README.md
 AGENTS.md

@@ -2,11 +2,14 @@
 
 ## Status and source of truth
 
-This repository has an infrastructure-only foundation for the planned Campus Cuisines Django application. Read `infrastructure_plan.md` before changes; it records selected Python 3.13, Django 5.2 LTS, pip-tools lock files, WhiteNoise static delivery, local PostgreSQL/MinIO, and Cloud Run as the future release target. Do not change those decisions without using the applicable planning skill and updating the plan.
+This repository has a Django application foundation for Campus Cuisines. Read `infrastructure_plan.md` before changes; it records selected Python 3.13, Django 5.2 LTS, pip-tools lock files, WhiteNoise static delivery, local PostgreSQL/MinIO, and Cloud Run as the future release target. Do not change those decisions without using the applicable planning skill and updating the plan.
 
 ## Repository map
 
-- Application package, Django settings, front end, API, models, migrations, and product docs: not created yet.
+- `config/`: Django settings, routing, and WSGI/ASGI entry points.
+- `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
+- `core/`, `templates/`, `static/`: public homepage and browser assets.
+- Feature-specific models, APIs, user flows, uploads, and product documentation beyond the foundation: not created yet.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
 - `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local services and future application container infrastructure.
 - `scripts/`: configuration verifier and Compose smoke test.
@@ -30,13 +33,14 @@ python scripts/verify_infrastructure.py
 ruff format --check .
 ruff check .
 pyright
-pytest tests/infrastructure
+python manage.py check
+pytest
 ./scripts/smoke.sh
 ```
 
 CI runs the same infrastructure checks plus Bandit, pip-audit, Gitleaks, CodeQL, Docker image build/Trivy scanning, and—after application code is added—Django checks, full test coverage, and browser tests.
 
-`./scripts/smoke.sh` always cleans up with `docker compose down --volumes --remove-orphans`. For manual development, start only `postgres` and `minio`; stop them with the same cleanup command when finished. Named volumes hold disposable local data.
+`./scripts/smoke.sh` always cleans up with `docker compose down --volumes --remove-orphans`. For manual development, run `docker compose up --build web`; it starts the application with PostgreSQL and MinIO. Stop the local stack with the same cleanup command when finished. Named volumes hold disposable local data.
 
 ## Change checklist
 
