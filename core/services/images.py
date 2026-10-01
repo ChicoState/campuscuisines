@@ -16,6 +16,9 @@ class SignedUrlStorage(Protocol):
 
 def signed_image_url(asset: ImageAsset, viewer: User | None) -> str:
     """Return a short-lived URL only when the viewer may render the asset."""
+    if asset.deleted_at is not None:
+        raise PermissionDenied("You are not allowed to view this image.")
+
     is_owner = (
         asset.uploaded_by_id is not None
         and viewer is not None
