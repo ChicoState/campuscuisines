@@ -15,8 +15,9 @@ Cuisines welcome page.
 - `accounts.User` subclasses `AbstractUser` without Campus Cuisines-specific
   fields. `AUTH_USER_MODEL` is set before the first migration so account design
   can evolve without changing Django's user-model setting later.
-- Local Compose starts the `web`, `postgres`, and `minio` services. MinIO is not
-  connected to application behavior until an upload feature is specified.
+- Local Compose starts the `web`, `postgres`, and `minio` services. MinIO now backs
+  private reusable image assets; the `minio-init` service creates the bucket and
+  removes anonymous access before the web service accepts uploads.
 
 ## Commands
 
@@ -40,7 +41,7 @@ Run automated checks with:
 ```text
 config/       Django settings, URL routing, and WSGI/ASGI entry points
 accounts/     Custom user model and its migration
-core/         Public homepage
+core/         Public homepage, reusable image assets, and retention command
 templates/    Shared and page templates
 static/       Project CSS and future browser assets
 tests/        Django application tests alongside infrastructure tests
@@ -50,10 +51,10 @@ tests/        Django application tests alongside infrastructure tests
 
 - Always: keep secrets in environment variables, add tests for behavior, and run
   checks before committing.
-- Ask first: add authentication flows, domain models, external services, uploads,
-  or new dependencies.
-- Never: commit `.env` values or make product decisions about accounts, uploads,
-  or food content in this foundation change.
+- Ask first: add authentication flows, domain models, external services, or new
+  dependencies beyond the approved image-asset workflow.
+- Never: commit `.env` values or make product decisions about reviews or other food
+  content beyond the approved image-asset workflow.
 
 ## Success criteria
 

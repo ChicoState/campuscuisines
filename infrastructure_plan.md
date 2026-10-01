@@ -1,6 +1,10 @@
 # Infrastructure Plan
 
-> Planning only. This document describes future infrastructure work. No installations, configuration changes, containers, workflows, deployments, or other implementation files were created by the infrastructure-planning process.
+> Historical planning record. This document records the infrastructure decisions
+> selected before implementation; wording such as “planned”, “future”, and “not
+> created” describes that planning stage rather than the current repository state.
+> For the implemented image-storage lifecycle, see
+> `docs/decisions/0001-private-image-storage-lifecycle.md`.
 
 ## 1. Project and User Experience
 

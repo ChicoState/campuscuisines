@@ -8,12 +8,14 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 
 - `config/`: Django settings, routing, and WSGI/ASGI entry points.
 - `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
-- `core/`, `templates/`, `static/`: public homepage and browser assets.
-- Feature-specific models, APIs, user flows, uploads, and product documentation beyond the foundation: not created yet.
+- `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of future product models.
+- `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
+- `docs/image-upload-plan.md`, `docs/decisions/`: approved image scope and durable storage-lifecycle decisions.
+- Reviews, restaurants, menu items, galleries, publishing endpoints, and other product models: not created yet.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
-- `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local services and future application container infrastructure.
+- `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local Django/PostgreSQL/MinIO services and production-image configuration.
 - `scripts/`: configuration verifier and Compose smoke test.
-- `tests/infrastructure/`: infrastructure-only tests.
+- `tests/`: infrastructure, image-asset, view, and browser tests.
 - `.github/workflows/`: PR quality checks and guarded future release workflow.
 - `.agents/skills/`: local skill instructions.
 
@@ -41,6 +43,21 @@ pytest
 CI runs the same infrastructure checks plus Bandit, pip-audit, Gitleaks, CodeQL, Docker image build/Trivy scanning, and—after application code is added—Django checks, full test coverage, and browser tests.
 
 `./scripts/smoke.sh` always cleans up with `docker compose down --volumes --remove-orphans`. For manual development, run `docker compose up --build web`; it starts the application with PostgreSQL and MinIO. Stop the local stack with the same cleanup command when finished. Named volumes hold disposable local data.
+
+## Image-asset lifecycle
+
+- Image bytes belong in the configured private object store; PostgreSQL retains the
+  generated key and metadata. Never move uploads into `STATIC_ROOT` or database blobs.
+- `ImageAsset.objects` excludes soft-deleted rows. Use `ImageAsset.soft_delete()` to
+  hide an asset and revoke future signed URLs; reserve `ImageAsset.all_objects` for
+  recovery/retention code.
+- Run `docker compose exec web python manage.py purge_deleted_images` manually in
+  local development. It purges objects and records soft-deleted for more than 30 days.
+  A production daily scheduler and its least-privilege identity are not implemented.
+- New rendering code must use `core.services.images.signed_image_url`; it signs for
+  five minutes only after ownership/publication authorization and rejects deleted assets.
+- The review integration must define the explicit `Review`–`ImageAsset` relationship
+  and the publishing action; do not add a generic foreign key or standalone gallery.
 
 ## Change checklist
 

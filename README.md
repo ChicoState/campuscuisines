@@ -1,6 +1,9 @@
 # Campus Cuisines
 
-Campus Cuisines is a Django web application foundation for campus-food content. It includes a public home page, initial application settings, and a deliberately minimal custom user model. Food-content workflows and account experiences have not been designed or implemented yet.
+Campus Cuisines is a Django web application foundation for campus-food content. It
+includes a public home page, a deliberately minimal custom user model, and a
+reusable private image-asset workflow. Reviews and other food-content workflows
+have not been designed or implemented yet.
 
 ## Repository map
 
@@ -14,8 +17,8 @@ Campus Cuisines is a Django web application foundation for campus-food content. 
 | `.agents/skills/` | Repository-specific agent workflows |
 | `config/` | Django settings, routes, and WSGI/ASGI entry points |
 | `accounts/` | Initial custom Django user model and migration |
-| `core/`, `templates/`, `static/` | Public homepage and browser assets |
-| `docs/` | Living implementation specifications and plans |
+| `core/`, `templates/`, `static/` | Public homepage, reusable image-asset workflow, templates, and browser assets |
+| `docs/` | Living implementation plans and architecture decisions |
 
 ## Getting started
 
@@ -73,6 +76,37 @@ Campus Cuisines is a Django web application foundation for campus-food content. 
 
 The Docker image installs only the runtime lock file, collects fingerprinted static files with WhiteNoise, and runs as a non-root user. Compose overrides its production Gunicorn command with Django’s development server and bind-mounts the source code for local edits. Production must supply `DJANGO_DEBUG=false`, a real `DJANGO_SECRET_KEY`, `DATABASE_URL`, and appropriate `DJANGO_ALLOWED_HOSTS`; Cloud Run’s HTTPS proxy is supported through `X-Forwarded-Proto`. See the [Django WSGI deployment documentation](https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/).
 
+## Image assets and retention
+
+`/images/upload/` accepts JPEG, PNG, and WebP files after Pillow validates their
+content, size (5 MiB), and decoded dimensions (16 megapixels). Image bytes are
+stored in the private configured object-storage bucket; PostgreSQL stores the
+UUID-based object key and image metadata. They are never stored in `STATIC_ROOT`
+or as database blobs.
+
+When `DJANGO_DEBUG=false`, uploads require an authenticated user and the asset is
+owned by that user. Anonymous uploads are available only while `DJANGO_DEBUG=true`
+for disposable local development. A newly uploaded asset is private. Django signs a
+five-minute object-storage URL only for its owner in the draft view, or for a future
+public feature after that feature explicitly sets `published_at`. This repository
+does not yet have a publish action, review relationship, gallery, or public image
+browsing page.
+
+Call `ImageAsset.soft_delete()` to hide an asset immediately and revoke new URL
+issuance. The record and private object remain recoverable for 30 days. Purge
+eligible assets from the configured Compose storage service with:
+
+```sh
+docker compose exec web python manage.py purge_deleted_images
+```
+
+The command deletes the storage object before its database record, leaves the record
+for a later retry if storage deletion fails, and can be run repeatedly. Local runs
+are manual. Production still needs a separately provisioned, least-privilege daily
+scheduler before release; no scheduler is included here. See
+[ADR-001](docs/decisions/0001-private-image-storage-lifecycle.md) for the full
+storage, visibility, and retention rationale.
+
 ## Common commands
 
 | Command | Purpose |
@@ -83,12 +117,13 @@ The Docker image installs only the runtime lock file, collects fingerprinted sta
 | `python manage.py check` | Run Django system checks |
 | `pytest` | Run infrastructure and Django tests; browser tests skip unless opted in |
 | `DATABASE_URL=postgresql://campuscuisines:change-this-local-only@127.0.0.1:5432/campuscuisines pytest --create-db` | Run tests against local Compose PostgreSQL |
-| `RUN_BROWSER_TESTS=true pytest -m browser` | Run the Chromium homepage smoke test after `python -m playwright install chromium` |
+| `RUN_BROWSER_TESTS=true pytest -m browser` | Run Chromium homepage and image-workflow smoke tests after `python -m playwright install chromium` |
+| `docker compose exec web python manage.py purge_deleted_images` | Permanently remove storage objects and records soft-deleted more than 30 days ago |
 | `./scripts/smoke.sh` | Validate Compose services, then clean them up |
 | `docker compose up --build web` | Start the local application, PostgreSQL, and MinIO at `http://localhost:8000/` |
 | `docker compose down --volumes --remove-orphans` | Stop services and delete local data |
 
-CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, a Chromium homepage smoke test, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
+CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, Chromium homepage and image-workflow smoke tests, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
 
 ## Troubleshooting
 

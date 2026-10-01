@@ -5,6 +5,16 @@
 Approved product direction. This plan guides the image-asset foundation; a later
 review specification will define the review model and its image cardinality.
 
+## Implementation status
+
+The storage configuration, validated `ImageAsset` model, upload workflow,
+controlled rendering, soft deletion, and retention command described in tasks 1–4
+and 6 are implemented. The documentation task is complete with
+`docs/decisions/0001-private-image-storage-lifecycle.md`. Task 5 remains deferred:
+a future review specification must define the explicit `Review`–`ImageAsset`
+relationship and the publishing action. No standalone gallery, generic relation, or
+production scheduler has been added.
+
 ## Reviewed outcome
 
 Campus Cuisines needs a reusable image asset capability: an authorized user uploads
