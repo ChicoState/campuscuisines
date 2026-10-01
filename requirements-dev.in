@@ -8,7 +8,7 @@ pytest==9.1.1
 pytest-django==4.14.0
 pytest-cov==7.1.0
 playwright==1.63.0
-ruff==0.16.8
+ruff==0.16.9
 pyright==1.1.414
 bandit==1.9.4
 pip-audit==2.10.1
