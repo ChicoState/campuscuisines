@@ -73,7 +73,9 @@ def test_non_debug_mode_records_the_authenticated_uploader(client) -> None:
     )
 
     assert response.status_code == 302
-    assert ImageAsset.objects.get().uploaded_by == user
+    asset = ImageAsset.objects.get()
+    assert response.url == reverse("image-detail", kwargs={"pk": asset.pk})
+    assert asset.uploaded_by == user
 
 
 @pytest.mark.django_db

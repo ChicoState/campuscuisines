@@ -17,12 +17,16 @@ def image_upload_path(_: models.Model, filename: str) -> str:
 class ImageAsset(models.Model):
     """Private reusable image metadata backed by configured object storage."""
 
+    objects: models.Manager
+    uploaded_by_id: int | None
+
     file = models.ImageField(
         upload_to=image_upload_path, validators=[validate_raster_image]
     )
     alt_text = models.CharField(max_length=255)
     caption = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    published_at = models.DateTimeField(blank=True, null=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         blank=True,

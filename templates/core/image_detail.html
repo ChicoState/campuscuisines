@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Uploaded image | Campus Cuisines{% endblock %}
+
+{% block content %}
+  <section aria-labelledby="image-heading">
+    <p class="eyebrow">Uploaded image</p>
+    <h1 id="image-heading">Uploaded image</h1>
+    <figure>
+      <img src="{{ image_url }}" alt="{{ asset.alt_text }}">
+      {% if asset.caption %}<figcaption>{{ asset.caption }}</figcaption>{% endif %}
+    </figure>
+  </section>
+{% endblock %}
