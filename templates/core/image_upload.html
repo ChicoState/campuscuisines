@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Upload an image | Campus Cuisines{% endblock %}
+
+{% block content %}
+  <section aria-labelledby="upload-heading">
+    <p class="eyebrow">Image upload</p>
+    <h1 id="upload-heading">Upload an image</h1>
+    <p class="intro">Upload a JPEG, PNG, or WebP image up to 5 MiB.</p>
+
+    <form class="image-upload-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <p>
+        {{ form.file.label_tag }}
+        {{ form.file }}
+        {{ form.file.errors }}
+      </p>
+      <p>
+        {{ form.alt_text.label_tag }}
+        {{ form.alt_text }}
+        {{ form.alt_text.errors }}
+      </p>
+      <p>
+        {{ form.caption.label_tag }}
+        {{ form.caption }}
+        {{ form.caption.errors }}
+      </p>
+      <button type="submit">Upload image</button>
+    </form>
+  </section>
+{% endblock %}
