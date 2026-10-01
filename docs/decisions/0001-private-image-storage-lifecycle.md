@@ -31,6 +31,7 @@ eventual cleanup.
   does not accept SVG, GIF, HEIC, PDFs, or arbitrary files.
 - In non-debug environments, uploads require an authenticated owner. Anonymous
   uploads are allowed only while `DJANGO_DEBUG=true` for disposable local work.
+  `DJANGO_DEBUG` defaults to false and must be explicitly enabled locally.
 - Keep a new asset private. `signed_image_url` creates a five-minute signed URL only
   for the owner’s authenticated draft view or after an owning feature sets
   `published_at`. The helper refuses deleted assets.

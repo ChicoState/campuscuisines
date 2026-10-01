@@ -114,7 +114,8 @@ The upload key should use a server-generated UUID, such as
   delete it. Use normal Django CSRF protection and server-generated storage names.
 - Permit anonymous uploads only when `DJANGO_DEBUG=true`; this branch must be
   unavailable when `DJANGO_DEBUG=false`, including when an authentication rollout is
-  incomplete. In that same debug-only mode, anonymous assets may be attached to and
+  incomplete. `DJANGO_DEBUG` defaults to false, so local development must opt in
+  explicitly. In that same debug-only mode, anonymous assets may be attached to and
   published with development reviews. Development uploads and reviews are
   intentionally disposable.
 - Soft-delete image records: remove them from every user-visible query and stop

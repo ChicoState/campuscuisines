@@ -9,7 +9,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://campuscuisines:change-this-local-only@postgres:5432/campuscuisines}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
-      DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-replace-with-a-local-secret}
       OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-local-minio-user}
       OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-campus-cuisines-uploads}

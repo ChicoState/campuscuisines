@@ -31,6 +31,7 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 Use Python 3.13 with the hash-locked requirements file. Run:
 
 ```sh
+export DJANGO_DEBUG=true
 python scripts/verify_infrastructure.py
 ruff format --check .
 ruff check .
@@ -43,6 +44,10 @@ pytest
 CI runs the same infrastructure checks plus Bandit, pip-audit, Gitleaks, CodeQL, Docker image build/Trivy scanning, and—after application code is added—Django checks, full test coverage, and browser tests.
 
 `./scripts/smoke.sh` always cleans up with `docker compose down --volumes --remove-orphans`. For manual development, run `docker compose up --build web`; it starts the application with PostgreSQL and MinIO. Stop the local stack with the same cleanup command when finished. Named volumes hold disposable local data.
+
+`DJANGO_DEBUG` defaults to `false`. Local debug behavior requires an explicit
+`DJANGO_DEBUG=true` opt-in (the committed `.env.example` supplies it for Compose);
+never restore a debug-enabled fallback.
 
 ## Image-asset lifecycle
 

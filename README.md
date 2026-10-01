@@ -24,7 +24,10 @@ have not been designed or implemented yet.
 
 1. Install [Git](https://git-scm.com/downloads), [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine plus Compose), and a current [web browser](https://www.google.com/chrome/). Verify with `git --version`, `docker version`, and `docker compose version`.
 2. Install Python 3.13 only if you intend to run quality tools outside Docker. Use the [official Python installer](https://www.python.org/downloads/) or your platform version manager, then verify `python3.13 --version`.
-3. Create local-only configuration: `cp .env.example .env`. Replace the placeholder values in `.env`; never commit it.
+3. Create local-only configuration: `cp .env.example .env`. This explicitly enables
+   debug mode for Compose development; without `DJANGO_DEBUG=true`, Django defaults
+   to secure non-debug mode. Replace the placeholder values in `.env`; never commit
+   it.
 4. Install the exact locked toolchain using Python 3.13:
 
    ```sh
@@ -41,9 +44,12 @@ have not been designed or implemented yet.
 
    Open <http://localhost:8000/> in a browser. Stop the services and remove their disposable local data with `docker compose down --volumes --remove-orphans`.
 
-6. Run the normal non-Docker checks. These use SQLite by default and skip the opt-in Chromium test:
+6. Run the normal non-Docker checks. These use SQLite by default and skip the opt-in
+   Chromium test. Set debug mode explicitly in this shell; Django otherwise requires
+   a configured secret key and enables its non-debug security settings:
 
    ```sh
+   export DJANGO_DEBUG=true
    python scripts/verify_infrastructure.py
    ruff format --check .
    ruff check .
@@ -86,7 +92,7 @@ or as database blobs.
 
 When `DJANGO_DEBUG=false`, uploads require an authenticated user and the asset is
 owned by that user. Anonymous uploads are available only while `DJANGO_DEBUG=true`
-for disposable local development. A newly uploaded asset is private. Django signs a
+is explicitly set for disposable local development. A newly uploaded asset is private. Django signs a
 five-minute object-storage URL only for its owner in the draft view, or for a future
 public feature after that feature explicitly sets `published_at`. This repository
 does not yet have a publish action, review relationship, gallery, or public image
@@ -114,10 +120,10 @@ storage, visibility, and retention rationale.
 | `python scripts/verify_infrastructure.py` | Check required infrastructure files and core configuration |
 | `ruff format --check . && ruff check .` | Format and lint checks |
 | `pyright` | Type-check configured Python files |
-| `python manage.py check` | Run Django system checks |
-| `pytest` | Run infrastructure and Django tests; browser tests skip unless opted in |
-| `DATABASE_URL=postgresql://campuscuisines:change-this-local-only@127.0.0.1:5432/campuscuisines pytest --create-db` | Run tests against local Compose PostgreSQL |
-| `RUN_BROWSER_TESTS=true pytest -m browser` | Run Chromium homepage and image-workflow smoke tests after `python -m playwright install chromium` |
+| `DJANGO_DEBUG=true python manage.py check` | Run Django system checks in explicit local debug mode |
+| `DJANGO_DEBUG=true pytest` | Run infrastructure and Django tests; browser tests skip unless opted in |
+| `DJANGO_DEBUG=true DATABASE_URL=postgresql://campuscuisines:change-this-local-only@127.0.0.1:5432/campuscuisines pytest --create-db` | Run tests against local Compose PostgreSQL |
+| `DJANGO_DEBUG=true RUN_BROWSER_TESTS=true pytest -m browser` | Run Chromium homepage and image-workflow smoke tests after `python -m playwright install chromium` |
 | `docker compose exec web python manage.py purge_deleted_images` | Permanently remove storage objects and records soft-deleted more than 30 days ago |
 | `./scripts/smoke.sh` | Validate Compose services, then clean them up |
 | `docker compose up --build web` | Start the local application, PostgreSQL, and MinIO at `http://localhost:8000/` |

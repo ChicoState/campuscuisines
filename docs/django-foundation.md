@@ -26,9 +26,13 @@ cp .env.example .env
 docker compose up --build web
 ```
 
+The example environment file explicitly sets `DJANGO_DEBUG=true` for local Compose
+development. Django defaults to non-debug mode when the variable is absent.
+
 Run automated checks with:
 
 ```sh
+export DJANGO_DEBUG=true
 .venv/bin/python manage.py check
 .venv/bin/pytest
 .venv/bin/ruff format --check .
