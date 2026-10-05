@@ -101,6 +101,9 @@ The upload key should use a server-generated UUID, such as
 - Keep the upload bucket private. Use signed object-storage URLs with a five-minute
   expiry for template rendering; generate a URL only after Django has verified that
   the request may see the image. Do not expose new uploads as public bucket URLs.
+  Configure server-side object access separately from the browser-facing signing
+  endpoint: local Compose uses `http://minio:9000` internally and
+  `http://localhost:9000` for signed URLs.
 
 ## Security and authorization rules
 

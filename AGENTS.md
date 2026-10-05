@@ -61,6 +61,10 @@ never restore a debug-enabled fallback.
   A production daily scheduler and its least-privilege identity are not implemented.
 - New rendering code must use `core.services.images.signed_image_url`; it signs for
   five minutes only after ownership/publication authorization and rejects deleted assets.
+- Configure `OBJECT_STORAGE_ENDPOINT` for server-side object operations and
+  `OBJECT_STORAGE_PUBLIC_ENDPOINT` for browser-consumed signed URLs. In local
+  Compose these are `http://minio:9000` and `http://localhost:9000`; do not use the
+  internal Docker hostname in a browser-facing URL.
 - The review integration must define the explicit `Review`–`ImageAsset` relationship
   and the publishing action; do not add a generic foreign key or standalone gallery.
 

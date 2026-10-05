@@ -98,6 +98,13 @@ public feature after that feature explicitly sets `published_at`. This repositor
 does not yet have a publish action, review relationship, gallery, or public image
 browsing page.
 
+Local Compose uses two endpoints for the same private MinIO bucket:
+`OBJECT_STORAGE_ENDPOINT=http://minio:9000` for Django's container-to-container
+storage operations and `OBJECT_STORAGE_PUBLIC_ENDPOINT=http://localhost:9000` for
+signed URLs opened by a host browser. Keep the former private. Production must set
+the public endpoint to the browser-reachable S3-compatible host; signed image URLs
+remain private and expire after five minutes.
+
 Call `ImageAsset.soft_delete()` to hide an asset immediately and revoke new URL
 issuance. The record and private object remain recoverable for 30 days. Purge
 eligible assets from the configured Compose storage service with:

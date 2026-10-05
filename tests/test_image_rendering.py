@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.core.exceptions import PermissionDenied
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -37,7 +39,8 @@ def test_new_image_assets_are_unpublished() -> None:
 
 
 @pytest.mark.django_db
-def test_signed_image_url_allows_the_owner_to_render_an_unpublished_asset() -> None:
+@override_settings(OBJECT_STORAGE_PUBLIC_ENDPOINT="http://browser-storage.test:9000")
+def test_signed_image_url_uses_the_browser_reachable_storage_endpoint() -> None:
     from core.services.images import SIGNED_URL_EXPIRY_SECONDS, signed_image_url
 
     user = User.objects.create_user(
@@ -45,17 +48,15 @@ def test_signed_image_url_allows_the_owner_to_render_an_unpublished_asset() -> N
     )
     asset = image_asset(uploaded_by=user)
 
-    with patch.object(
-        asset.file.storage,
-        "url",
-        return_value="https://storage.example.test/private-image?signature=token",
-    ) as storage_url:
-        url = signed_image_url(asset, user)
+    url = signed_image_url(asset, user)
 
-    assert url == "https://storage.example.test/private-image?signature=token"
-    storage_url.assert_called_once_with(
-        asset.file.name, expire=SIGNED_URL_EXPIRY_SECONDS
-    )
+    parsed_url = urlparse(url)
+    assert parsed_url.scheme == "http"
+    assert parsed_url.netloc == "browser-storage.test:9000"
+    assert parsed_url.path == "/campus-cuisines-uploads/images/campus-meal.png"
+    assert parse_qs(parsed_url.query)["X-Amz-Expires"] == [
+        str(SIGNED_URL_EXPIRY_SECONDS)
+    ]
 
 
 @pytest.mark.django_db
@@ -88,6 +89,7 @@ def test_signed_image_url_rejects_anonymous_rendering_of_an_unpublished_asset() 
 
 
 @pytest.mark.django_db
+@override_settings(OBJECT_STORAGE_PUBLIC_ENDPOINT="http://browser-storage.test:9000")
 def test_signed_image_url_allows_public_rendering_after_publication() -> None:
     from core.services.images import signed_image_url
 
@@ -96,14 +98,9 @@ def test_signed_image_url_allows_public_rendering_after_publication() -> None:
     )
     asset = image_asset(uploaded_by=user, published_at=timezone.now())
 
-    with patch.object(
-        asset.file.storage,
-        "url",
-        return_value="https://storage.example.test/published-image?signature=token",
-    ):
-        url = signed_image_url(asset, None)
+    url = signed_image_url(asset, None)
 
-    assert url == "https://storage.example.test/published-image?signature=token"
+    assert url.startswith("http://browser-storage.test:9000/")
 
 
 @pytest.mark.django_db

@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-from typing import Protocol, cast
-
+import boto3
+from botocore.config import Config
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
 from accounts.models import User
 from core.models import ImageAsset
 
 SIGNED_URL_EXPIRY_SECONDS = 5 * 60
-
-
-class SignedUrlStorage(Protocol):
-    def url(self, name: str, *, expire: int) -> str: ...
 
 
 def signed_image_url(asset: ImageAsset, viewer: User | None) -> str:
@@ -30,5 +27,16 @@ def signed_image_url(asset: ImageAsset, viewer: User | None) -> str:
     if not asset.file.name:
         raise ValueError("An image asset must have a stored file.")
 
-    storage = cast(SignedUrlStorage, asset.file.storage)
-    return storage.url(asset.file.name, expire=SIGNED_URL_EXPIRY_SECONDS)
+    browser_storage = boto3.client(
+        "s3",
+        aws_access_key_id=settings.OBJECT_STORAGE_ACCESS_KEY,
+        aws_secret_access_key=settings.OBJECT_STORAGE_SECRET_KEY,
+        endpoint_url=settings.OBJECT_STORAGE_PUBLIC_ENDPOINT,
+        region_name=settings.OBJECT_STORAGE_REGION,
+        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+    )
+    return browser_storage.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": settings.OBJECT_STORAGE_BUCKET, "Key": asset.file.name},
+        ExpiresIn=SIGNED_URL_EXPIRY_SECONDS,
+    )

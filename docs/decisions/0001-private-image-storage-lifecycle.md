@@ -34,7 +34,10 @@ eventual cleanup.
   `DJANGO_DEBUG` defaults to false and must be explicitly enabled locally.
 - Keep a new asset private. `signed_image_url` creates a five-minute signed URL only
   for the owner’s authenticated draft view or after an owning feature sets
-  `published_at`. The helper refuses deleted assets.
+  `published_at`. The helper refuses deleted assets. Server-side object operations
+  use `OBJECT_STORAGE_ENDPOINT`, while signed URLs use the separately configured,
+  browser-reachable `OBJECT_STORAGE_PUBLIC_ENDPOINT`; local Compose therefore uses
+  `http://minio:9000` and `http://localhost:9000`, respectively.
 - Soft-delete through `ImageAsset.soft_delete()`. The default manager hides deleted
   rows immediately; `all_objects` exists only for recovery and retention work.
 - Run `python manage.py purge_deleted_images` once daily in production through a
@@ -49,6 +52,13 @@ eventual cleanup.
 
 Rejected because a guessed or copied URL would bypass Django authorization and a
 private draft could become visible before publication.
+
+### Reusing the internal Docker hostname in signed URLs
+
+Rejected because `minio` is resolvable only by containers on the Compose network,
+not by the host browser that renders an image. Using a separate public endpoint for
+presigning keeps server-side object traffic on the private network while issuing a
+valid, time-limited browser URL.
 
 ### Image blobs in PostgreSQL
 

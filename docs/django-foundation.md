@@ -18,6 +18,9 @@ Cuisines welcome page.
 - Local Compose starts the `web`, `postgres`, and `minio` services. MinIO now backs
   private reusable image assets; the `minio-init` service creates the bucket and
   removes anonymous access before the web service accepts uploads.
+- Django reaches MinIO through the Compose-only `OBJECT_STORAGE_ENDPOINT`, while
+  browser-consumed signed URLs use `OBJECT_STORAGE_PUBLIC_ENDPOINT`. The committed
+  local defaults are `http://minio:9000` and `http://localhost:9000`, respectively.
 
 ## Commands
 
