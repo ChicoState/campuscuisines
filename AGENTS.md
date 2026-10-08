@@ -9,7 +9,10 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 - `config/`: Django settings, routing, and WSGI/ASGI entry points.
 - `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
 - `core/`, `templates/`, `static/`: public homepage and browser assets.
-- Feature-specific models, APIs, user flows, uploads, and product documentation beyond the foundation: not created yet.
+- `docs/`: living specifications and approved implementation plans, including
+  `dish-reviews-plan.md` for the planned public dish-review MVP.
+- `reviews/`: public dish-review model, form, admin registration, and migration.
+- Other feature-specific models, APIs, user flows, uploads, and product documentation beyond the dish-review MVP: not created yet.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
 - `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local services and future application container infrastructure.
 - `scripts/`: configuration verifier and Compose smoke test.
