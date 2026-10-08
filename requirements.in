@@ -4,4 +4,4 @@ Django==5.2.17
 whitenoise==6.12.0
 psycopg[binary]==3.3.5
 django-storages[s3]==1.14.6
-boto3==1.43.98
+boto3==1.43.108
