@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
   <section class="welcome" aria-labelledby="welcome-heading">
@@ -9,4 +10,87 @@
       The first food-focused features will take shape here.
     </p>
   </section>
+
+  <section class="reviews-section" aria-labelledby="review-form-heading">
+    <div class="reviews-section__heading">
+      <p class="eyebrow">Share your take</p>
+      <h2 id="review-form-heading">Review a dish</h2>
+    </div>
+    <form method="post" class="review-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="form-field">
+        <label for="{{ form.dish_name.id_for_label }}">{{ form.dish_name.label }}</label>
+        {{ form.dish_name }}
+        {{ form.dish_name.errors }}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.reviewer_name.id_for_label }}">{{ form.reviewer_name.label }}</label>
+        {{ form.reviewer_name }}
+        {{ form.reviewer_name.errors }}
+      </div>
+      <fieldset class="form-field rating-picker">
+        <legend>{{ form.rating.label }}</legend>
+        <div class="rating-picker__choices" data-rating-picker>
+          <div class="rating-picker__stars" aria-hidden="true">
+            <span class="rating-picker__star" data-rating-star="1">★</span>
+            <span class="rating-picker__star" data-rating-star="2">★</span>
+            <span class="rating-picker__star" data-rating-star="3">★</span>
+            <span class="rating-picker__star" data-rating-star="4">★</span>
+            <span class="rating-picker__star" data-rating-star="5">★</span>
+          </div>
+          {% for choice in form.rating %}
+            <label class="rating-picker__choice" for="{{ choice.id_for_label }}">
+              {{ choice.tag }}
+              <span class="visually-hidden">{{ choice.choice_label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <output class="rating-picker__value" data-rating-picker-value aria-live="polite">Select a rating</output>
+        {{ form.rating.errors }}
+      </fieldset>
+      <div class="form-field">
+        <label for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+        {{ form.text }}
+        {{ form.text.errors }}
+      </div>
+      <button type="submit">Publish review</button>
+    </form>
+  </section>
+
+  <section class="reviews-section reviews-feed" aria-labelledby="review-feed-heading">
+    <div class="reviews-section__heading">
+      <p class="eyebrow">Fresh from campus</p>
+      <h2 id="review-feed-heading">Recent reviews</h2>
+    </div>
+    {% if reviews %}
+      <ol class="review-list">
+        {% for review in reviews %}
+          <li class="review">
+            <div class="review__heading">
+              <div>
+                <h3>{{ review.dish_name }}</h3>
+                <p>Reviewed by {{ review.reviewer_name }}</p>
+              </div>
+              <p class="review__rating">
+                <span class="rating-display" aria-hidden="true">
+                  <span class="rating-display__base">★★★★★</span>
+                  <span class="rating-display__filled" style="width: {% widthratio review.rating 5 100 %}%">★★★★★</span>
+                </span>
+                <span>{{ review.rating }} out of 5 stars</span>
+              </p>
+            </div>
+            <p class="review__text">{{ review.text|linebreaksbr }}</p>
+            <time datetime="{{ review.created_at|date:'c' }}">{{ review.created_at|date:"F j, Y, g:i a T" }}</time>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="empty-state">No reviews yet. Be the first to share a campus favorite.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'core/rating-picker.js' %}"></script>
 {% endblock %}

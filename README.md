@@ -1,6 +1,6 @@
 # Campus Cuisines
 
-Campus Cuisines is a Django web application foundation for campus-food content. It includes a public home page, initial application settings, and a deliberately minimal custom user model. Food-content workflows and account experiences have not been designed or implemented yet.
+Campus Cuisines is a Django web application for campus-food content. Its public homepage includes a welcome introduction and an anonymous dish-review MVP: anyone can submit a dish name, reviewer name, whole-star rating, and review, then see the newest reviews first.
 
 ## Repository map
 
@@ -14,8 +14,9 @@ Campus Cuisines is a Django web application foundation for campus-food content. 
 | `.agents/skills/` | Repository-specific agent workflows |
 | `config/` | Django settings, routes, and WSGI/ASGI entry points |
 | `accounts/` | Initial custom Django user model and migration |
+| `reviews/` | Public dish-review model, form, admin registration, and migration |
 | `core/`, `templates/`, `static/` | Public homepage and browser assets |
-| `docs/` | Living implementation specifications and plans |
+| `docs/` | Living implementation specifications and plans, including the [dish reviews MVP plan](docs/dish-reviews-plan.md) |
 
 ## Getting started
 
@@ -89,6 +90,17 @@ The Docker image installs only the runtime lock file, collects fingerprinted sta
 | `docker compose down --volumes --remove-orphans` | Stop services and delete local data |
 
 CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, a Chromium homepage smoke test, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
+
+## Dish reviews MVP
+
+The homepage keeps its existing welcome content and adds a review form plus a newest-first feed. A review requires:
+
+- Dish name (up to 100 characters)
+- Reviewer name (up to 50 characters)
+- A whole 1–5 star rating: Bad, Mediocre, Fine, Good, or Amazing
+- Review text (up to 500 characters)
+
+Reviews publish immediately and are public. This deliberately small MVP does not include accounts, a dish catalog, filtering, moderation, uploads, favorites, station data, rate limiting, or anonymous-spam protection. See the approved [dish reviews plan](docs/dish-reviews-plan.md) for the complete scope.
 
 ## Troubleshooting
 

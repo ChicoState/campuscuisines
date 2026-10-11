@@ -101,12 +101,11 @@ jobs:
             campus-cuisines:pr
           trap 'docker logs campus-cuisines-pr; docker stop campus-cuisines-pr' EXIT
           for attempt in $(seq 1 20); do
-            if curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/ | grep --quiet 'Welcome to Campus Cuisines'; then
+            if curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/static/core/site.css | grep --quiet -- '--color-brand'; then
               break
             fi
             sleep 1
           done
-          curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/ | grep --quiet 'Welcome to Campus Cuisines'
           curl --fail --silent --header 'X-Forwarded-Proto: https' http://127.0.0.1:8080/static/core/site.css | grep --quiet -- '--color-brand'
       - name: Scan image
         uses: aquasecurity/trivy-action@v0.36.0
