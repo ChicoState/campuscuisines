@@ -100,7 +100,11 @@ def test_signed_image_url_allows_public_rendering_after_publication() -> None:
 
     url = signed_image_url(asset, None)
 
-    assert url.startswith("http://browser-storage.test:9000/")
+    parsed_url = urlparse(url)
+    assert parsed_url.scheme == "http"
+    assert parsed_url.hostname == "browser-storage.test"
+    assert parsed_url.port == 9000
+    assert parsed_url.path.startswith("/")
 
 
 @pytest.mark.django_db
