@@ -4,7 +4,8 @@ Campus Cuisines is a Django web application foundation for campus-food content. 
 includes a public home page, a deliberately minimal custom user model, and a
 reusable private image-asset workflow. Its public homepage also includes an anonymous
 dish-review MVP: anyone can submit a dish name, reviewer name, whole-star rating, and
-review, then see the newest reviews first.
+review, then see the newest reviews first. Explicit local debug mode also permits one
+optional image per review.
 
 ## Repository map
 
@@ -19,7 +20,7 @@ review, then see the newest reviews first.
 | `config/` | Django settings, routes, and WSGI/ASGI entry points |
 | `accounts/` | Initial custom Django user model and migration |
 | `core/`, `templates/`, `static/` | Public homepage, reusable image-asset workflow, templates, and browser assets |
-| `reviews/` | Public dish-review model, form, admin registration, and migration |
+| `reviews/` | Public dish-review model, form, explicit image association, admin registration, and migrations |
 | `docs/` | Living implementation specifications, plans, and architecture decisions, including the [dish reviews MVP plan](docs/dish-reviews-plan.md) |
 
 ## Getting started
@@ -96,9 +97,12 @@ When `DJANGO_DEBUG=false`, uploads require an authenticated user and the asset i
 owned by that user. Anonymous uploads are available only while `DJANGO_DEBUG=true`
 is explicitly set for disposable local development. A newly uploaded asset is private. Django signs a
 five-minute object-storage URL only for its owner in the draft view, or for a future
-public feature after that feature explicitly sets `published_at`. This repository
-does not yet have a publish action, review relationship, gallery, or public image
-browsing page.
+public feature after that feature explicitly sets `published_at`. In explicit local
+debug mode, the review form can upload one image, automatically sets its alt text to
+`Photo of <dish name>`, and publishes it with the review. Non-debug anonymous review
+requests that include image data are rejected. The repository has no gallery or public
+image browsing page; future multi-image review support will extend the explicit
+`ReviewImage` association.
 
 Local Compose uses two endpoints for the same private MinIO bucket:
 `OBJECT_STORAGE_ENDPOINT=http://minio:9000` for Django's container-to-container
@@ -149,7 +153,14 @@ The homepage keeps its existing welcome content and adds a review form plus a ne
 - A whole 1–5 star rating: Bad, Mediocre, Fine, Good, or Amazing
 - Review text (up to 500 characters)
 
-Reviews publish immediately and are public. This deliberately small MVP does not include accounts, a dish catalog, filtering, moderation, review-image uploads, favorites, station data, rate limiting, or anonymous-spam protection. See the approved [dish reviews plan](docs/dish-reviews-plan.md) for the complete scope.
+Reviews publish immediately and are public. With `DJANGO_DEBUG=true`, an optional JPEG,
+PNG, or WebP image can be selected from the review form; it is automatically described
+as `Photo of <dish name>` and displayed with the review. Image uploads remain rejected
+for anonymous non-debug requests until authenticated review authors are implemented.
+This deliberately small MVP does not include accounts, a dish catalog, filtering,
+moderation, production review-image uploads, favorites, station data, rate limiting,
+or anonymous-spam protection. See the approved [dish reviews plan](docs/dish-reviews-plan.md)
+and [review image integration plan](docs/review-image-integration-plan.md) for scope.
 
 ## Troubleshooting
 

@@ -1,6 +1,8 @@
+import base64
 import os
 
 import pytest
+from django.conf import settings
 from django.contrib.auth import BACKEND_SESSION_KEY, HASH_SESSION_KEY, SESSION_KEY
 from django.contrib.sessions.backends.db import SessionStore
 from django.test import override_settings
@@ -10,6 +12,16 @@ from playwright.sync_api import expect, sync_playwright
 
 from accounts.models import User
 from core.models import ImageAsset
+
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+    "staticfiles": settings.STORAGES["staticfiles"],
+}
+
+ONE_PIXEL_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/"
+    "9in6WAAAAABJRU5ErkJggg=="
+)
 
 
 @pytest.mark.browser
@@ -58,6 +70,60 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         expect(page.locator(".review__rating")).not_to_contain_text("Good")
         expect(page.locator(".review time")).to_be_visible()
         expect(page.locator("link[href*='core/site.css']")).to_have_count(1)
+        assert not console_errors
+        browser.close()
+
+
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
+@override_settings(DEBUG=True, STORAGES=TEST_STORAGES)
+def test_review_form_uploads_and_renders_an_image_in_chromium(
+    live_server, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "core.views.signed_image_url",
+        lambda _asset, _viewer: (
+            "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+        ),
+    )
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page(viewport={"width": 320, "height": 720})
+        console_errors: list[str] = []
+        page.on(
+            "console",
+            lambda message: (
+                console_errors.append(message.text) if message.type == "error" else None
+            ),
+        )
+
+        page.goto(live_server.url, wait_until="networkidle")
+        page.get_by_label("Dish name").fill("Mushroom ramen")
+        page.get_by_label("Your name").fill("Avery")
+        page.get_by_label("4 out of 5 stars — Good").click()
+        page.get_by_label("Your review").fill("Warm, savory, and excellent.")
+        page.get_by_label("Add an image (optional)").set_input_files(
+            {
+                "name": "ramen.png",
+                "mimeType": "image/png",
+                "buffer": ONE_PIXEL_PNG,
+            }
+        )
+        page.get_by_role("button", name="Publish review").click()
+
+        image = page.get_by_role("img", name="Photo of Mushroom ramen")
+        expect(image).to_be_visible()
+        assert (
+            image.evaluate("element => getComputedStyle(element).objectFit") == "cover"
+        )
+        assert (
+            image.evaluate("element => getComputedStyle(element).maxHeight") == "320px"
+        )
         assert not console_errors
         browser.close()
 

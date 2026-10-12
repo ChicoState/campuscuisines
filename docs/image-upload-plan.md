@@ -10,10 +10,10 @@ review specification will define the review model and its image cardinality.
 The storage configuration, validated `ImageAsset` model, upload workflow,
 controlled rendering, soft deletion, and retention command described in tasks 1–4
 and 6 are implemented. The documentation task is complete with
-`docs/decisions/0001-private-image-storage-lifecycle.md`. Task 5 remains deferred:
-a future review specification must define the explicit `Review`–`ImageAsset`
-relationship and the publishing action. No standalone gallery, generic relation, or
-production scheduler has been added.
+`docs/decisions/0001-private-image-storage-lifecycle.md`. Task 5 is implemented by
+the approved `docs/review-image-integration-plan.md`: a debug-only review submission
+may create one explicit `ReviewImage` association and publish its asset. No standalone
+gallery, generic relation, or production scheduler has been added.
 
 ## Reviewed outcome
 

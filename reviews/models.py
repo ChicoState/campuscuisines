@@ -3,6 +3,8 @@ from typing import cast
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from core.models import ImageAsset
+
 
 class Review(models.Model):
     dish_name = models.CharField(max_length=100)
@@ -30,3 +32,21 @@ class Review(models.Model):
 
     def __str__(self) -> str:
         return f"{self.dish_name} — {self.rating_label}"
+
+
+class ReviewImage(models.Model):
+    """An explicit image association owned by the review feature."""
+
+    objects: models.Manager
+
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name="image_links"
+    )
+    image = models.OneToOneField(
+        ImageAsset, on_delete=models.PROTECT, related_name="review_image"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["review"], name="one_image_per_review")
+        ]

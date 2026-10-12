@@ -172,6 +172,34 @@ h1 {
   resize: vertical;
 }
 
+.review-image-upload input[type="file"] {
+  max-width: 100%;
+  color: var(--color-muted);
+  font: inherit;
+}
+
+.review-image-upload input[type="file"]::file-selector-button {
+  margin-right: var(--space-3);
+  border: 0;
+  border-radius: 0.25rem;
+  background: var(--color-brand);
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: var(--space-3) var(--space-4);
+}
+
+.review-image-upload input[type="file"]::file-selector-button:hover {
+  background: #0a4836;
+}
+
+.form-help {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
 .errorlist {
   margin: 0;
   padding-left: var(--space-6);
@@ -307,6 +335,16 @@ button {
 
 .review__text {
   margin-top: var(--space-4);
+}
+
+.review__image {
+  display: block;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 20rem;
+  margin-top: var(--space-4);
+  border: 1px solid #cbd5d0;
+  object-fit: cover;
 }
 
 .review time {

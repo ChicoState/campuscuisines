@@ -1,4 +1,7 @@
 from django import forms
+from django.core.exceptions import ValidationError
+
+from core.validators import validate_raster_image
 
 from .models import Review
 
@@ -12,6 +15,28 @@ RATING_CHOICES = [
 
 
 class ReviewForm(forms.ModelForm):
+    image = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(
+            attrs={"accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"}
+        ),
+    )
+
+    def __init__(self, *args, allow_image_upload: bool = False, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.allow_image_upload = allow_image_upload
+
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        if image is None:
+            return None
+        if not self.allow_image_upload:
+            raise ValidationError(
+                "Image uploads are only available in local debug mode."
+            )
+        validate_raster_image(image)
+        return image
+
     class Meta:
         model = Review
         fields = ["dish_name", "reviewer_name", "rating", "text"]

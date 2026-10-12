@@ -16,7 +16,7 @@
       <p class="eyebrow">Share your take</p>
       <h2 id="review-form-heading">Review a dish</h2>
     </div>
-    <form method="post" class="review-form">
+    <form method="post" enctype="multipart/form-data" class="review-form">
       {% csrf_token %}
       {{ form.non_field_errors }}
       <div class="form-field">
@@ -54,6 +54,16 @@
         {{ form.text }}
         {{ form.text.errors }}
       </div>
+      {% if allow_image_upload %}
+        <div class="form-field review-image-upload">
+          <label for="{{ form.image.id_for_label }}">Add an image (optional)</label>
+          {{ form.image }}
+          <p class="form-help">JPEG, PNG, or WebP. The image will appear with your review.</p>
+          {{ form.image.errors }}
+        </div>
+      {% else %}
+        {{ form.image.errors }}
+      {% endif %}
       <button type="submit">Publish review</button>
     </form>
   </section>
@@ -81,6 +91,11 @@
               </p>
             </div>
             <p class="review__text">{{ review.text|linebreaksbr }}</p>
+            {% with review_image=review.published_images.0 %}
+              {% if review_image %}
+                <img class="review__image" src="{{ review_image.url }}" alt="{{ review_image.image.alt_text }}" loading="lazy">
+              {% endif %}
+            {% endwith %}
             <time datetime="{{ review.created_at|date:'c' }}">{{ review.created_at|date:"F j, Y, g:i a T" }}</time>
           </li>
         {% endfor %}

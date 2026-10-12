@@ -10,7 +10,7 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 - `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
 - `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
 - `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
-- `reviews/`: public dish-review model, form, admin registration, and migration.
+- `reviews/`: public dish-review model, form, explicit review-image association, admin registration, and migrations.
 - `docs/`: living specifications and approved implementation plans, including
   `dish-reviews-plan.md`, `image-upload-plan.md`, and storage-lifecycle decisions.
 - Restaurants, menu items, galleries, publishing endpoints, and other product models: not created yet.
@@ -67,8 +67,9 @@ never restore a debug-enabled fallback.
   `OBJECT_STORAGE_PUBLIC_ENDPOINT` for browser-consumed signed URLs. In local
   Compose these are `http://minio:9000` and `http://localhost:9000`; do not use the
   internal Docker hostname in a browser-facing URL.
-- The current review MVP does not integrate images. Any future `Review`–`ImageAsset`
-  integration must define an explicit relationship and publishing action; do not add a
+- Reviews may attach one image only in explicit local debug mode through the
+  `ReviewImage` association. It publishes with the review and renders through a signed
+  URL. Future multi-image support must extend this explicit relationship; do not add a
   generic foreign key or standalone gallery.
 
 ## Change checklist
