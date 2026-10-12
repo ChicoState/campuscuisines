@@ -6,10 +6,27 @@ from django.shortcuts import get_object_or_404, redirect, render
 from core.forms import ImageAssetUploadForm
 from core.models import ImageAsset
 from core.services.images import signed_image_url
+from reviews.forms import ReviewForm
+from reviews.models import Review
 
 
 def home(request):
-    return render(request, "core/home.html")
+    if request.method == "POST":
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("home")
+    else:
+        form = ReviewForm()
+
+    return render(
+        request,
+        "core/home.html",
+        {
+            "form": form,
+            "reviews": Review.objects.all(),  # type: ignore[reportAttributeAccessIssue]
+        },
+    )
 
 
 def image_upload(request):

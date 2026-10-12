@@ -8,14 +8,16 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 
 - `config/`: Django settings, routing, and WSGI/ASGI entry points.
 - `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
-- `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of future product models.
+- `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
 - `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
-- `docs/image-upload-plan.md`, `docs/decisions/`: approved image scope and durable storage-lifecycle decisions.
-- Reviews, restaurants, menu items, galleries, publishing endpoints, and other product models: not created yet.
+- `reviews/`: public dish-review model, form, admin registration, and migration.
+- `docs/`: living specifications and approved implementation plans, including
+  `dish-reviews-plan.md`, `image-upload-plan.md`, and storage-lifecycle decisions.
+- Restaurants, menu items, galleries, publishing endpoints, and other product models: not created yet.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
 - `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local Django/PostgreSQL/MinIO services and production-image configuration.
 - `scripts/`: configuration verifier and Compose smoke test.
-- `tests/`: infrastructure, image-asset, view, and browser tests.
+- `tests/`: infrastructure, image-asset, review, view, and browser tests.
 - `.github/workflows/`: PR quality checks and guarded future release workflow.
 - `.agents/skills/`: local skill instructions.
 
@@ -65,8 +67,9 @@ never restore a debug-enabled fallback.
   `OBJECT_STORAGE_PUBLIC_ENDPOINT` for browser-consumed signed URLs. In local
   Compose these are `http://minio:9000` and `http://localhost:9000`; do not use the
   internal Docker hostname in a browser-facing URL.
-- The review integration must define the explicit `Review`–`ImageAsset` relationship
-  and the publishing action; do not add a generic foreign key or standalone gallery.
+- The current review MVP does not integrate images. Any future `Review`–`ImageAsset`
+  integration must define an explicit relationship and publishing action; do not add a
+  generic foreign key or standalone gallery.
 
 ## Change checklist
 
