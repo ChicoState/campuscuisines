@@ -14,7 +14,7 @@ def env_flag(name: str, default: bool = False) -> bool:
     return os.getenv(name, str(default)).lower() in {"1", "true", "yes", "on"}
 
 
-DEBUG = env_flag("DJANGO_DEBUG", default=True)
+DEBUG = env_flag("DJANGO_DEBUG", default=False)
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     if DEBUG:
@@ -113,14 +113,47 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Server-side object operations use the Compose-network hostname. Signed URLs are
+# consumed by a browser, so they need a separately configurable public endpoint.
+OBJECT_STORAGE_ACCESS_KEY = os.getenv(
+    "OBJECT_STORAGE_ACCESS_KEY",
+    os.getenv("MINIO_ROOT_USER", "local-minio-user"),
+)
+OBJECT_STORAGE_SECRET_KEY = os.getenv(
+    "OBJECT_STORAGE_SECRET_KEY",
+    os.getenv("MINIO_ROOT_PASSWORD", "change-this-local-only"),
+)
+OBJECT_STORAGE_BUCKET = os.getenv("OBJECT_STORAGE_BUCKET", "campus-cuisines-uploads")
+OBJECT_STORAGE_ENDPOINT = os.getenv("OBJECT_STORAGE_ENDPOINT", "http://minio:9000")
+OBJECT_STORAGE_PUBLIC_ENDPOINT = os.getenv(
+    "OBJECT_STORAGE_PUBLIC_ENDPOINT", "http://localhost:9000"
+)
+OBJECT_STORAGE_REGION = os.getenv("OBJECT_STORAGE_REGION", "us-east-1")
+
 STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": OBJECT_STORAGE_ACCESS_KEY,
+            "secret_key": OBJECT_STORAGE_SECRET_KEY,
+            "bucket_name": OBJECT_STORAGE_BUCKET,
+            "endpoint_url": OBJECT_STORAGE_ENDPOINT,
+            "region_name": OBJECT_STORAGE_REGION,
+            "signature_version": "s3v4",
+            "addressing_style": "path",
+            "default_acl": None,
+            "querystring_auth": True,
+            "file_overwrite": False,
+        },
+    },
     "staticfiles": {
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
             if DEBUG
             else "whitenoise.storage.CompressedManifestStaticFilesStorage"
         )
-    }
+    },
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

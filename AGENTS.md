@@ -8,15 +8,16 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 
 - `config/`: Django settings, routing, and WSGI/ASGI entry points.
 - `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
-- `core/`, `templates/`, `static/`: public homepage and browser assets.
+- `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
+- `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
+- `reviews/`: public dish-review model, form, explicit review-image association, admin registration, and migrations.
 - `docs/`: living specifications and approved implementation plans, including
-  `dish-reviews-plan.md` for the planned public dish-review MVP.
-- `reviews/`: public dish-review model, form, admin registration, and migration.
-- Other feature-specific models, APIs, user flows, uploads, and product documentation beyond the dish-review MVP: not created yet.
+  `dish-reviews-plan.md`, `image-upload-plan.md`, and storage-lifecycle decisions.
+- Restaurants, menu items, galleries, publishing endpoints, and other product models: not created yet.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
-- `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local services and future application container infrastructure.
+- `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local Django/PostgreSQL/MinIO services and production-image configuration.
 - `scripts/`: configuration verifier and Compose smoke test.
-- `tests/infrastructure/`: infrastructure-only tests.
+- `tests/`: infrastructure, image-asset, review, view, and browser tests.
 - `.github/workflows/`: PR quality checks and guarded future release workflow.
 - `.agents/skills/`: local skill instructions.
 
@@ -32,6 +33,7 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 Use Python 3.13 with the hash-locked requirements file. Run:
 
 ```sh
+export DJANGO_DEBUG=true
 python scripts/verify_infrastructure.py
 ruff format --check .
 ruff check .
@@ -44,6 +46,31 @@ pytest
 CI runs the same infrastructure checks plus Bandit, pip-audit, Gitleaks, CodeQL, Docker image build/Trivy scanning, and—after application code is added—Django checks, full test coverage, and browser tests.
 
 `./scripts/smoke.sh` always cleans up with `docker compose down --volumes --remove-orphans`. For manual development, run `docker compose up --build web`; it starts the application with PostgreSQL and MinIO. Stop the local stack with the same cleanup command when finished. Named volumes hold disposable local data.
+
+`DJANGO_DEBUG` defaults to `false`. Local debug behavior requires an explicit
+`DJANGO_DEBUG=true` opt-in (the committed `.env.example` supplies it for Compose);
+never restore a debug-enabled fallback.
+
+## Image-asset lifecycle
+
+- Image bytes belong in the configured private object store; PostgreSQL retains the
+  generated key and metadata. Never move uploads into `STATIC_ROOT` or database blobs.
+- `ImageAsset.objects` excludes soft-deleted rows. Use `ImageAsset.soft_delete()` to
+  hide an asset and revoke future signed URLs; reserve `ImageAsset.all_objects` for
+  recovery/retention code.
+- Run `docker compose exec web python manage.py purge_deleted_images` manually in
+  local development. It purges objects and records soft-deleted for more than 30 days.
+  A production daily scheduler and its least-privilege identity are not implemented.
+- New rendering code must use `core.services.images.signed_image_url`; it signs for
+  five minutes only after ownership/publication authorization and rejects deleted assets.
+- Configure `OBJECT_STORAGE_ENDPOINT` for server-side object operations and
+  `OBJECT_STORAGE_PUBLIC_ENDPOINT` for browser-consumed signed URLs. In local
+  Compose these are `http://minio:9000` and `http://localhost:9000`; do not use the
+  internal Docker hostname in a browser-facing URL.
+- Reviews may attach one image only in explicit local debug mode through the
+  `ReviewImage` association. It publishes with the review and renders through a signed
+  URL. Future multi-image support must extend this explicit relationship; do not add a
+  generic foreign key or standalone gallery.
 
 ## Change checklist
 

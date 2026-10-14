@@ -1,6 +1,11 @@
 # Campus Cuisines
 
-Campus Cuisines is a Django web application for campus-food content. Its public homepage includes a welcome introduction and an anonymous dish-review MVP: anyone can submit a dish name, reviewer name, whole-star rating, and review, then see the newest reviews first.
+Campus Cuisines is a Django web application foundation for campus-food content. It
+includes a public home page, a deliberately minimal custom user model, and a
+reusable private image-asset workflow. Its public homepage also includes an anonymous
+dish-review MVP: anyone can submit a dish name, reviewer name, whole-star rating, and
+review, then see the newest reviews first. Explicit local debug mode also permits one
+optional image per review.
 
 ## Repository map
 
@@ -14,15 +19,18 @@ Campus Cuisines is a Django web application for campus-food content. Its public 
 | `.agents/skills/` | Repository-specific agent workflows |
 | `config/` | Django settings, routes, and WSGI/ASGI entry points |
 | `accounts/` | Initial custom Django user model and migration |
-| `reviews/` | Public dish-review model, form, admin registration, and migration |
-| `core/`, `templates/`, `static/` | Public homepage and browser assets |
-| `docs/` | Living implementation specifications and plans, including the [dish reviews MVP plan](docs/dish-reviews-plan.md) |
+| `core/`, `templates/`, `static/` | Public homepage, reusable image-asset workflow, templates, and browser assets |
+| `reviews/` | Public dish-review model, form, explicit image association, admin registration, and migrations |
+| `docs/` | Living implementation specifications, plans, and architecture decisions, including the [dish reviews MVP plan](docs/dish-reviews-plan.md) |
 
 ## Getting started
 
 1. Install [Git](https://git-scm.com/downloads), [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine plus Compose), and a current [web browser](https://www.google.com/chrome/). Verify with `git --version`, `docker version`, and `docker compose version`.
 2. Install Python 3.13 only if you intend to run quality tools outside Docker. Use the [official Python installer](https://www.python.org/downloads/) or your platform version manager, then verify `python3.13 --version`.
-3. Create local-only configuration: `cp .env.example .env`. Replace the placeholder values in `.env`; never commit it.
+3. Create local-only configuration: `cp .env.example .env`. This explicitly enables
+   debug mode for Compose development; without `DJANGO_DEBUG=true`, Django defaults
+   to secure non-debug mode. Replace the placeholder values in `.env`; never commit
+   it.
 4. Install the exact locked toolchain using Python 3.13:
 
    ```sh
@@ -39,9 +47,12 @@ Campus Cuisines is a Django web application for campus-food content. Its public 
 
    Open <http://localhost:8000/> in a browser. Stop the services and remove their disposable local data with `docker compose down --volumes --remove-orphans`.
 
-6. Run the normal non-Docker checks. These use SQLite by default and skip the opt-in Chromium test:
+6. Run the normal non-Docker checks. These use SQLite by default and skip the opt-in
+   Chromium test. Set debug mode explicitly in this shell; Django otherwise requires
+   a configured secret key and enables its non-debug security settings:
 
    ```sh
+   export DJANGO_DEBUG=true
    python scripts/verify_infrastructure.py
    ruff format --check .
    ruff check .
@@ -74,6 +85,47 @@ Campus Cuisines is a Django web application for campus-food content. Its public 
 
 The Docker image installs only the runtime lock file, collects fingerprinted static files with WhiteNoise, and runs as a non-root user. Compose overrides its production Gunicorn command with Django’s development server and bind-mounts the source code for local edits. Production must supply `DJANGO_DEBUG=false`, a real `DJANGO_SECRET_KEY`, `DATABASE_URL`, and appropriate `DJANGO_ALLOWED_HOSTS`; Cloud Run’s HTTPS proxy is supported through `X-Forwarded-Proto`. See the [Django WSGI deployment documentation](https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/).
 
+## Image assets and retention
+
+`/images/upload/` accepts JPEG, PNG, and WebP files after Pillow validates their
+content, size (5 MiB), and decoded dimensions (16 megapixels). Image bytes are
+stored in the private configured object-storage bucket; PostgreSQL stores the
+UUID-based object key and image metadata. They are never stored in `STATIC_ROOT`
+or as database blobs.
+
+When `DJANGO_DEBUG=false`, uploads require an authenticated user and the asset is
+owned by that user. Anonymous uploads are available only while `DJANGO_DEBUG=true`
+is explicitly set for disposable local development. A newly uploaded asset is private. Django signs a
+five-minute object-storage URL only for its owner in the draft view, or for a future
+public feature after that feature explicitly sets `published_at`. In explicit local
+debug mode, the review form can upload one image, automatically sets its alt text to
+`Photo of <dish name>`, and publishes it with the review. Non-debug anonymous review
+requests that include image data are rejected. The repository has no gallery or public
+image browsing page; future multi-image review support will extend the explicit
+`ReviewImage` association.
+
+Local Compose uses two endpoints for the same private MinIO bucket:
+`OBJECT_STORAGE_ENDPOINT=http://minio:9000` for Django's container-to-container
+storage operations and `OBJECT_STORAGE_PUBLIC_ENDPOINT=http://localhost:9000` for
+signed URLs opened by a host browser. Keep the former private. Production must set
+the public endpoint to the browser-reachable S3-compatible host; signed image URLs
+remain private and expire after five minutes.
+
+Call `ImageAsset.soft_delete()` to hide an asset immediately and revoke new URL
+issuance. The record and private object remain recoverable for 30 days. Purge
+eligible assets from the configured Compose storage service with:
+
+```sh
+docker compose exec web python manage.py purge_deleted_images
+```
+
+The command deletes the storage object before its database record, leaves the record
+for a later retry if storage deletion fails, and can be run repeatedly. Local runs
+are manual. Production still needs a separately provisioned, least-privilege daily
+scheduler before release; no scheduler is included here. See
+[ADR-001](docs/decisions/0001-private-image-storage-lifecycle.md) for the full
+storage, visibility, and retention rationale.
+
 ## Common commands
 
 | Command | Purpose |
@@ -81,15 +133,16 @@ The Docker image installs only the runtime lock file, collects fingerprinted sta
 | `python scripts/verify_infrastructure.py` | Check required infrastructure files and core configuration |
 | `ruff format --check . && ruff check .` | Format and lint checks |
 | `pyright` | Type-check configured Python files |
-| `python manage.py check` | Run Django system checks |
-| `pytest` | Run infrastructure and Django tests; browser tests skip unless opted in |
-| `DATABASE_URL=postgresql://campuscuisines:change-this-local-only@127.0.0.1:5432/campuscuisines pytest --create-db` | Run tests against local Compose PostgreSQL |
-| `RUN_BROWSER_TESTS=true pytest -m browser` | Run the Chromium homepage smoke test after `python -m playwright install chromium` |
+| `DJANGO_DEBUG=true python manage.py check` | Run Django system checks in explicit local debug mode |
+| `DJANGO_DEBUG=true pytest` | Run infrastructure and Django tests; browser tests skip unless opted in |
+| `DJANGO_DEBUG=true DATABASE_URL=postgresql://campuscuisines:change-this-local-only@127.0.0.1:5432/campuscuisines pytest --create-db` | Run tests against local Compose PostgreSQL |
+| `DJANGO_DEBUG=true RUN_BROWSER_TESTS=true pytest -m browser` | Run Chromium homepage and image-workflow smoke tests after `python -m playwright install chromium` |
+| `docker compose exec web python manage.py purge_deleted_images` | Permanently remove storage objects and records soft-deleted more than 30 days ago |
 | `./scripts/smoke.sh` | Validate Compose services, then clean them up |
 | `docker compose up --build web` | Start the local application, PostgreSQL, and MinIO at `http://localhost:8000/` |
 | `docker compose down --volumes --remove-orphans` | Stop services and delete local data |
 
-CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, a Chromium homepage smoke test, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
+CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, Chromium homepage and image-workflow smoke tests, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
 
 ## Dish reviews MVP
 
@@ -100,7 +153,14 @@ The homepage keeps its existing welcome content and adds a review form plus a ne
 - A whole 1–5 star rating: Bad, Mediocre, Fine, Good, or Amazing
 - Review text (up to 500 characters)
 
-Reviews publish immediately and are public. This deliberately small MVP does not include accounts, a dish catalog, filtering, moderation, uploads, favorites, station data, rate limiting, or anonymous-spam protection. See the approved [dish reviews plan](docs/dish-reviews-plan.md) for the complete scope.
+Reviews publish immediately and are public. With `DJANGO_DEBUG=true`, an optional JPEG,
+PNG, or WebP image can be selected from the review form; it is automatically described
+as `Photo of <dish name>` and displayed with the review. Image uploads remain rejected
+for anonymous non-debug requests until authenticated review authors are implemented.
+This deliberately small MVP does not include accounts, a dish catalog, filtering,
+moderation, production review-image uploads, favorites, station data, rate limiting,
+or anonymous-spam protection. See the approved [dish reviews plan](docs/dish-reviews-plan.md)
+and [review image integration plan](docs/review-image-integration-plan.md) for scope.
 
 ## Troubleshooting
 

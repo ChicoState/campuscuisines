@@ -7,8 +7,10 @@ public review-submission section and newest-first review feed below it. Anyone
 can submit a dish name, reviewer name, a whole 1–5 star rating, and up-to-500-
 character review; valid submissions publish immediately.
 
-No account, dish catalog, filtering, station data, moderation, favorites,
-uploads, or rate limiting is included.
+No account, dish catalog, filtering, station data, moderation, favorites, production
+uploads, or rate limiting is included. The later approved review-image integration
+adds one optional image only when `DJANGO_DEBUG=true`; see
+`review-image-integration-plan.md`.
 
 ## Key changes
 

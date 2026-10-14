@@ -15,8 +15,12 @@ Cuisines welcome page.
 - `accounts.User` subclasses `AbstractUser` without Campus Cuisines-specific
   fields. `AUTH_USER_MODEL` is set before the first migration so account design
   can evolve without changing Django's user-model setting later.
-- Local Compose starts the `web`, `postgres`, and `minio` services. MinIO is not
-  connected to application behavior until an upload feature is specified.
+- Local Compose starts the `web`, `postgres`, and `minio` services. MinIO now backs
+  private reusable image assets; the `minio-init` service creates the bucket and
+  removes anonymous access before the web service accepts uploads.
+- Django reaches MinIO through the Compose-only `OBJECT_STORAGE_ENDPOINT`, while
+  browser-consumed signed URLs use `OBJECT_STORAGE_PUBLIC_ENDPOINT`. The committed
+  local defaults are `http://minio:9000` and `http://localhost:9000`, respectively.
 
 ## Commands
 
@@ -25,9 +29,13 @@ cp .env.example .env
 docker compose up --build web
 ```
 
+The example environment file explicitly sets `DJANGO_DEBUG=true` for local Compose
+development. Django defaults to non-debug mode when the variable is absent.
+
 Run automated checks with:
 
 ```sh
+export DJANGO_DEBUG=true
 .venv/bin/python manage.py check
 .venv/bin/pytest
 .venv/bin/ruff format --check .
@@ -40,7 +48,7 @@ Run automated checks with:
 ```text
 config/       Django settings, URL routing, and WSGI/ASGI entry points
 accounts/     Custom user model and its migration
-core/         Public homepage
+core/         Public homepage, reusable image assets, and retention command
 templates/    Shared and page templates
 static/       Project CSS and future browser assets
 tests/        Django application tests alongside infrastructure tests
@@ -50,10 +58,10 @@ tests/        Django application tests alongside infrastructure tests
 
 - Always: keep secrets in environment variables, add tests for behavior, and run
   checks before committing.
-- Ask first: add authentication flows, domain models, external services, uploads,
-  or new dependencies.
-- Never: commit `.env` values or make product decisions about accounts, uploads,
-  or food content in this foundation change.
+- Ask first: add authentication flows, domain models, external services, or new
+  dependencies beyond the approved image-asset workflow.
+- Never: commit `.env` values or make product decisions about reviews or other food
+  content beyond the approved image-asset workflow.
 
 ## Success criteria
 
