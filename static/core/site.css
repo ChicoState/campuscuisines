@@ -158,7 +158,7 @@ h1 {
   font-weight: 700;
 }
 
-.form-field input:not([type="radio"]),
+.form-field input:not([type="radio"], [type="checkbox"]),
 .form-field textarea {
   width: 100%;
   border: 1px solid #82918a;

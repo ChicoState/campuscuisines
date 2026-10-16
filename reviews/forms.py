@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 from core.validators import validate_raster_image
 
-from .models import Review
+from .models import Review, Tag
 
 RATING_CHOICES = [
     (1, "1 out of 5 stars — Bad"),
@@ -15,6 +15,11 @@ RATING_CHOICES = [
 
 
 class ReviewForm(forms.ModelForm):
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
     image = forms.ImageField(
         required=False,
         widget=forms.ClearableFileInput(
@@ -25,6 +30,7 @@ class ReviewForm(forms.ModelForm):
     def __init__(self, *args, allow_image_upload: bool = False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.allow_image_upload = allow_image_upload
+        self.fields["tags"].queryset = Tag.objects.select_related("category")
 
     def clean_image(self):
         image = self.cleaned_data.get("image")
@@ -39,7 +45,7 @@ class ReviewForm(forms.ModelForm):
 
     class Meta:
         model = Review
-        fields = ["dish_name", "reviewer_name", "rating", "text"]
+        fields = ["dish_name", "reviewer_name", "rating", "text", "tags"]
         widgets = {
             "dish_name": forms.TextInput(attrs={"autocomplete": "off"}),
             "reviewer_name": forms.TextInput(attrs={"autocomplete": "name"}),
@@ -51,4 +57,5 @@ class ReviewForm(forms.ModelForm):
             "reviewer_name": "Your name",
             "rating": "Your rating",
             "text": "Your review",
+            "tags": "Applicable tags",
         }
