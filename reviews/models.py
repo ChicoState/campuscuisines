@@ -6,6 +6,38 @@ from django.db import models
 from core.models import ImageAsset
 
 
+class TagCategory(models.Model):
+    objects: models.Manager
+
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return cast(str, self.name)
+
+
+class Tag(models.Model):
+    objects: models.Manager
+
+    category = models.ForeignKey(
+        TagCategory, on_delete=models.CASCADE, related_name="tags"
+    )
+    name = models.CharField(max_length=50)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["category", "name"], name="unique_tag_name_per_category"
+            )
+        ]
+        ordering = ["category__name", "name"]
+
+    def __str__(self) -> str:
+        return f"{self.category}: {cast(str, self.name)}"
+
+
 class Review(models.Model):
     dish_name = models.CharField(max_length=100)
     reviewer_name = models.CharField(max_length=50)
@@ -13,6 +45,7 @@ class Review(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
     text = models.TextField(max_length=500)
+    tags = models.ManyToManyField(Tag, blank=True, related_name="reviews")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

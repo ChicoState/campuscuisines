@@ -54,6 +54,11 @@
         {{ form.text }}
         {{ form.text.errors }}
       </div>
+      <fieldset class="form-field">
+        <legend>{{ form.tags.label }}</legend>
+        {{ form.tags }}
+        {{ form.tags.errors }}
+      </fieldset>
       {% if allow_image_upload %}
         <div class="form-field review-image-upload">
           <label for="{{ form.image.id_for_label }}">Add an image (optional)</label>

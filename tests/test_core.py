@@ -8,7 +8,7 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
-from reviews.models import Review
+from reviews.models import Review, Tag, TagCategory
 
 
 @pytest.mark.django_db
@@ -28,6 +28,22 @@ def test_homepage_renders_five_rating_stars(client) -> None:
 
 
 @pytest.mark.django_db
+def test_homepage_offers_configured_tags_as_checkboxes(client) -> None:
+    category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Allergens"
+    )
+    Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=category, name="Contains peanuts"
+    )
+
+    response = client.get(reverse("home"))
+
+    content = response.content.decode()
+    assert 'type="checkbox"' in content
+    assert "Allergens: Contains peanuts" in content
+
+
+@pytest.mark.django_db
 def test_valid_review_submission_creates_a_review_and_redirects(client) -> None:
     response = client.post(
         reverse("home"),
@@ -44,6 +60,31 @@ def test_valid_review_submission_creates_a_review_and_redirects(client) -> None:
         Review.objects.filter(dish_name="Mushroom ramen").count()  # type: ignore[reportAttributeAccessIssue]
         == 1
     )
+
+
+@pytest.mark.django_db
+def test_review_submission_saves_selected_tags(client) -> None:
+    category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Meat type"
+    )
+    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=category, name="Vegetarian"
+    )
+
+    response = client.post(
+        reverse("home"),
+        {
+            "dish_name": "Mushroom ramen",
+            "reviewer_name": "Avery",
+            "rating": 4,
+            "text": "Warm, savory, and excellent.",
+            "tags": [str(vegetarian.pk)],
+        },
+    )
+
+    review = Review.objects.get()  # type: ignore[reportAttributeAccessIssue]
+    assert response.status_code == 302
+    assert list(review.tags.all()) == [vegetarian]
 
 
 @pytest.mark.django_db

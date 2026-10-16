@@ -12,6 +12,7 @@ from playwright.sync_api import expect, sync_playwright
 
 from accounts.models import User
 from core.models import ImageAsset
+from reviews.models import Review, Tag, TagCategory
 
 TEST_STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
@@ -31,6 +32,13 @@ ONE_PIXEL_PNG = base64.b64decode(
     reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
 )
 def test_homepage_renders_in_chromium(live_server) -> None:
+    category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Meat type"
+    )
+    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=category, name="Vegetarian"
+    )
+
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page()
@@ -64,6 +72,9 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         )
         expect(page.locator(".rating-picker__star--filled")).to_have_count(4)
         page.get_by_label("Your review").fill("Warm, savory, and excellent.")
+        tag = page.get_by_label("Meat type: Vegetarian")
+        tag.check()
+        expect(tag).to_be_checked()
         page.get_by_role("button", name="Publish review").click()
         expect(page.get_by_role("heading", name="Mushroom ramen")).to_be_visible()
         expect(page.locator(".review__rating")).to_contain_text("4 out of 5 stars")
@@ -72,6 +83,9 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         expect(page.locator("link[href*='core/site.css']")).to_have_count(1)
         assert not console_errors
         browser.close()
+
+    review = Review.objects.get()  # type: ignore[reportAttributeAccessIssue]
+    assert list(review.tags.all()) == [vegetarian]
 
 
 @pytest.mark.browser
