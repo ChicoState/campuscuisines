@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in | Campus Cuisines{% endblock %}
+
+{% block content %}
+  <section class="account-panel" aria-labelledby="sign-in-heading">
+    <p class="eyebrow">Campus access</p>
+    <h1 id="sign-in-heading">Sign in to Campus Cuisines</h1>
+    <p class="intro">
+      Sign in with your verified Chico State Google account to publish reviews and
+      upload images. Public browsing does not require an account.
+    </p>
+    <form method="post" action="{{ google_login_url }}" class="account-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <button type="submit">Continue with Google</button>
+    </form>
+    <p class="form-help">Only eligible <code>@csuchico.edu</code> identities can use actions.</p>
+  </section>
+{% endblock %}
