@@ -8,7 +8,14 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import User
 from reviews.models import Review
+
+
+def eligible_user() -> User:
+    return User.objects.create_user(
+        username="student", email="student@csuchico.edu", password="unused"
+    )
 
 
 @pytest.mark.django_db
@@ -21,6 +28,7 @@ def test_homepage_shows_an_empty_review_feed(client) -> None:
 
 @pytest.mark.django_db
 def test_homepage_renders_five_rating_stars(client) -> None:
+    client.force_login(eligible_user())
     response = client.get(reverse("home"))
 
     content = response.content.decode()
@@ -29,6 +37,7 @@ def test_homepage_renders_five_rating_stars(client) -> None:
 
 @pytest.mark.django_db
 def test_valid_review_submission_creates_a_review_and_redirects(client) -> None:
+    client.force_login(eligible_user())
     response = client.post(
         reverse("home"),
         {
@@ -48,6 +57,7 @@ def test_valid_review_submission_creates_a_review_and_redirects(client) -> None:
 
 @pytest.mark.django_db
 def test_review_submission_renders_only_the_selected_star_count(client) -> None:
+    client.force_login(eligible_user())
     response = client.post(
         reverse("home"),
         {
@@ -89,6 +99,7 @@ def test_review_submission_requires_a_csrf_token() -> None:
 
 @pytest.mark.django_db
 def test_invalid_review_submission_keeps_values_and_shows_errors(client) -> None:
+    client.force_login(eligible_user())
     response = client.post(
         reverse("home"),
         {"dish_name": "Mushroom ramen", "reviewer_name": "Avery", "rating": 0},
@@ -100,6 +111,28 @@ def test_invalid_review_submission_keeps_values_and_shows_errors(client) -> None
     assert "Ensure this value is greater than or equal to 1" in content
     assert "This field is required" in content
     assert Review.objects.count() == 0  # type: ignore[reportAttributeAccessIssue]
+
+
+@pytest.mark.django_db
+def test_anonymous_homepage_is_public_but_review_submission_is_authenticated(
+    client,
+) -> None:
+    get_response = client.get(reverse("home"))
+    post_response = client.post(
+        reverse("home"),
+        {
+            "dish_name": "Mushroom ramen",
+            "reviewer_name": "Avery",
+            "rating": 4,
+            "text": "Warm, savory, and excellent.",
+        },
+    )
+
+    assert get_response.status_code == 200
+    assert "Continue to sign in" in get_response.content.decode()
+    assert post_response.status_code == 302
+    assert post_response.url == "/accounts/login/?next=/"
+    assert not Review.objects.exists()  # type: ignore[reportAttributeAccessIssue]
 
 
 @pytest.mark.django_db

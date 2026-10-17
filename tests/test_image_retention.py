@@ -38,7 +38,9 @@ def image_asset(*, uploaded_by: User) -> ImageAsset:
 @override_settings(STORAGES=TEST_STORAGES)
 def test_soft_delete_hides_an_asset_without_removing_its_storage_object() -> None:
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=user)
     object_key = asset.file.name
@@ -59,7 +61,9 @@ def test_soft_deleted_asset_cannot_receive_a_signed_url() -> None:
     from core.services.images import signed_image_url
 
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=user)
     asset.soft_delete()
@@ -77,7 +81,9 @@ def test_soft_deleted_asset_is_not_retrievable_from_the_image_detail_view(
     client,
 ) -> None:
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=user)
     asset.soft_delete()
@@ -92,7 +98,9 @@ def test_soft_deleted_asset_is_not_retrievable_from_the_image_detail_view(
 @override_settings(STORAGES=TEST_STORAGES)
 def test_purge_deleted_images_removes_only_expired_assets() -> None:
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     expired_asset = image_asset(uploaded_by=user)
     recent_asset = image_asset(uploaded_by=user)
@@ -129,7 +137,9 @@ def test_purge_deleted_images_removes_only_expired_assets() -> None:
 @override_settings(STORAGES=TEST_STORAGES)
 def test_purge_deleted_images_keeps_the_record_when_storage_deletion_fails() -> None:
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=user)
     asset.soft_delete()

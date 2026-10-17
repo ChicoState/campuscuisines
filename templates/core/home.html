@@ -16,9 +16,10 @@
       <p class="eyebrow">Share your take</p>
       <h2 id="review-form-heading">Review a dish</h2>
     </div>
-    <form method="post" enctype="multipart/form-data" class="review-form">
-      {% csrf_token %}
-      {{ form.non_field_errors }}
+    {% if can_submit %}
+      <form method="post" enctype="multipart/form-data" class="review-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
       <div class="form-field">
         <label for="{{ form.dish_name.id_for_label }}">{{ form.dish_name.label }}</label>
         {{ form.dish_name }}
@@ -64,8 +65,14 @@
       {% else %}
         {{ form.image.errors }}
       {% endif %}
-      <button type="submit">Publish review</button>
-    </form>
+        <button type="submit">Publish review</button>
+      </form>
+    {% else %}
+      <div class="account-prompt">
+        <p>Sign in with an eligible Chico State Google account to publish a review.</p>
+        <a href="{% url 'account-login' %}?next={{ request.path|urlencode }}">Continue to sign in</a>
+      </div>
+    {% endif %}
   </section>
 
   <section class="reviews-section reviews-feed" aria-labelledby="review-feed-heading">

@@ -1,11 +1,14 @@
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import redirect_to_login
 from django.db import transaction
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from accounts.access import (
+    eligible_login_required,
+    is_eligible_user,
+    redirect_to_eligible_login,
+)
 from core.forms import ImageAssetUploadForm
 from core.models import ImageAsset
 from core.services.images import signed_image_url
@@ -14,6 +17,10 @@ from reviews.models import Review, ReviewImage
 
 
 def home(request):
+    if request.method == "POST" and not is_eligible_user(request.user):
+        return redirect_to_eligible_login(request)
+
+    can_submit = is_eligible_user(request.user)
     if request.method == "POST":
         form = ReviewForm(
             request.POST, request.FILES, allow_image_upload=settings.DEBUG
@@ -35,7 +42,7 @@ def home(request):
                     )
             return redirect("home")
     else:
-        form = ReviewForm(allow_image_upload=settings.DEBUG)
+        form = ReviewForm(allow_image_upload=settings.DEBUG) if can_submit else None
 
     review_images = Prefetch(
         "image_links",
@@ -57,33 +64,29 @@ def home(request):
         "core/home.html",
         {
             "form": form,
-            "allow_image_upload": settings.DEBUG,
+            "allow_image_upload": settings.DEBUG and can_submit,
+            "can_submit": can_submit,
             "reviews": reviews,
         },
     )
 
 
+@eligible_login_required
 def image_upload(request):
-    if not settings.DEBUG and not request.user.is_authenticated:
-        return redirect_to_login(request.get_full_path())
-
     if request.method == "POST":
         form = ImageAssetUploadForm(request.POST, request.FILES)
         if form.is_valid():
             asset = form.save(commit=False)
-            if request.user.is_authenticated:
-                asset.uploaded_by = request.user
+            asset.uploaded_by = request.user
             asset.save()
-            if asset.uploaded_by_id is not None:
-                return redirect("image-detail", pk=asset.pk)
-            return redirect("image-upload")
+            return redirect("image-detail", pk=asset.pk)
     else:
         form = ImageAssetUploadForm()
 
     return render(request, "core/image_upload.html", {"form": form})
 
 
-@login_required
+@eligible_login_required
 def image_detail(request, pk: int):
     asset = get_object_or_404(ImageAsset, pk=pk)
     return render(

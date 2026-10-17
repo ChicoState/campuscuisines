@@ -11,6 +11,7 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import User
 from core.models import ImageAsset
 from reviews.models import Review, ReviewImage
 
@@ -58,6 +59,11 @@ def test_review_image_allows_only_one_image_per_review() -> None:
 def test_debug_review_submission_attaches_and_publishes_an_uploaded_image(
     client,
 ) -> None:
+    client.force_login(
+        User.objects.create_user(
+            username="reviewer", email="reviewer@csuchico.edu", password="unused"
+        )
+    )
     response = client.post(
         reverse("home"),
         {
@@ -85,6 +91,11 @@ def test_debug_review_submission_attaches_and_publishes_an_uploaded_image(
 def test_non_debug_review_submission_rejects_an_image_without_persisting_data(
     client,
 ) -> None:
+    client.force_login(
+        User.objects.create_user(
+            username="reviewer", email="reviewer@csuchico.edu", password="unused"
+        )
+    )
     response = client.post(
         reverse("home"),
         {

@@ -30,7 +30,13 @@ ONE_PIXEL_PNG = base64.b64decode(
     os.getenv("RUN_BROWSER_TESTS") != "true",
     reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
 )
-def test_homepage_renders_in_chromium(live_server) -> None:
+def test_homepage_renders_in_chromium(live_server, client) -> None:
+    user = User.objects.create_user(
+        username="browser-student",
+        email="browser-student@csuchico.edu",
+        password="unused",
+    )
+    client.force_login(user)
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page()
@@ -48,6 +54,25 @@ def test_homepage_renders_in_chromium(live_server) -> None:
             page.get_by_role("heading", name="Welcome to Campus Cuisines")
         ).to_be_visible()
         expect(page.get_by_text("No reviews yet")).to_be_visible()
+
+        expect(page.get_by_role("link", name="Sign in", exact=True)).to_be_visible()
+        page.get_by_role("link", name="Sign in", exact=True).click()
+        expect(
+            page.get_by_role("heading", name="Sign in to Campus Cuisines")
+        ).to_be_visible()
+
+        context = browser.new_context()
+        context.add_cookies(
+            [
+                {
+                    "name": "sessionid",
+                    "value": client.cookies["sessionid"].value,
+                    "url": live_server.url,
+                }
+            ]
+        )
+        page = context.new_page()
+        page.goto(live_server.url, wait_until="networkidle")
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")
         expect(page.get_by_role("radio")).to_have_count(5)
@@ -71,6 +96,7 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         expect(page.locator(".review time")).to_be_visible()
         expect(page.locator("link[href*='core/site.css']")).to_have_count(1)
         assert not console_errors
+        context.close()
         browser.close()
 
 
@@ -82,8 +108,14 @@ def test_homepage_renders_in_chromium(live_server) -> None:
 )
 @override_settings(DEBUG=True, STORAGES=TEST_STORAGES)
 def test_review_form_uploads_and_renders_an_image_in_chromium(
-    live_server, monkeypatch: pytest.MonkeyPatch
+    live_server, client, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    user = User.objects.create_user(
+        username="browser-image-student",
+        email="browser-image-student@csuchico.edu",
+        password="unused",
+    )
+    client.force_login(user)
     monkeypatch.setattr(
         "core.views.signed_image_url",
         lambda _asset, _viewer: (
@@ -94,6 +126,15 @@ def test_review_form_uploads_and_renders_an_image_in_chromium(
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page(viewport={"width": 320, "height": 720})
+        page.context.add_cookies(
+            [
+                {
+                    "name": "sessionid",
+                    "value": client.cookies["sessionid"].value,
+                    "url": live_server.url,
+                }
+            ]
+        )
         console_errors: list[str] = []
         page.on(
             "console",
@@ -134,7 +175,7 @@ def test_review_form_uploads_and_renders_an_image_in_chromium(
     reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
 )
 @override_settings(DEBUG=True)
-def test_image_upload_form_renders_in_chromium(live_server) -> None:
+def test_image_upload_requires_sign_in_in_chromium(live_server) -> None:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page()
@@ -148,10 +189,9 @@ def test_image_upload_form_renders_in_chromium(live_server) -> None:
 
         page.goto(f"{live_server.url}/images/upload/", wait_until="networkidle")
 
-        expect(page.get_by_role("heading", name="Upload an image")).to_be_visible()
-        expect(page.get_by_label("File")).to_be_visible()
-        expect(page.get_by_label("Alt text")).to_be_visible()
-        expect(page.get_by_role("button", name="Upload image")).to_be_visible()
+        expect(
+            page.get_by_role("heading", name="Sign in to Campus Cuisines")
+        ).to_be_visible()
         assert not console_errors
         browser.close()
 
@@ -166,7 +206,9 @@ def test_owner_can_render_an_unpublished_image_in_chromium(
     live_server, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = ImageAsset.objects.create(
         file="images/campus-meal.png",

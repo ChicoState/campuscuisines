@@ -29,18 +29,15 @@ def valid_image() -> SimpleUploadedFile:
 
 @pytest.mark.django_db
 @override_settings(DEBUG=True, STORAGES=TEST_STORAGES)
-def test_debug_mode_allows_anonymous_image_uploads(client) -> None:
+def test_debug_mode_still_rejects_anonymous_image_uploads(client) -> None:
     response = client.post(
         reverse("image-upload"),
         {"file": valid_image(), "alt_text": "A campus meal", "caption": "Lunch"},
     )
 
-    asset = ImageAsset.objects.get()
-
     assert response.status_code == 302
-    assert response.url == reverse("image-upload")
-    assert asset.uploaded_by is None
-    assert default_storage.exists(asset.file.name)
+    assert response.url == f"/accounts/login/?next={reverse('image-upload')}"
+    assert not ImageAsset.objects.exists()
 
 
 @pytest.mark.django_db
@@ -63,7 +60,9 @@ def test_non_debug_mode_rejects_anonymous_image_uploads(client) -> None:
 @override_settings(DEBUG=False, STORAGES=TEST_STORAGES)
 def test_non_debug_mode_records_the_authenticated_uploader(client) -> None:
     user = User.objects.create_user(
-        username="upload-owner", password=get_random_string(32)
+        username="upload-owner",
+        email="upload-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     client.force_login(user)
 
@@ -81,6 +80,10 @@ def test_non_debug_mode_records_the_authenticated_uploader(client) -> None:
 @pytest.mark.django_db
 @override_settings(DEBUG=True, STORAGES=TEST_STORAGES)
 def test_invalid_upload_creates_no_asset_or_storage_object(client) -> None:
+    user = User.objects.create_user(
+        username="upload-owner", email="upload-owner@csuchico.edu", password="unused"
+    )
+    client.force_login(user)
     response = client.post(
         reverse("image-upload"),
         {
