@@ -1,11 +1,10 @@
 # Campus Cuisines
 
 Campus Cuisines is a Django web application foundation for campus-food content. It
-includes a public home page, a deliberately minimal custom user model, and a
-reusable private image-asset workflow. Its public homepage also includes an anonymous
-dish-review MVP: anyone can submit a dish name, reviewer name, whole-star rating, and
-review, then see the newest reviews first. Explicit local debug mode also permits one
-optional image per review.
+includes a public home page, Google-only Chico State accounts, a reusable private
+image-asset workflow, and a dish-review MVP. Anyone can browse published content;
+only an eligible, verified `@csuchico.edu` Google identity can publish reviews or
+upload images.
 
 ## Repository map
 
@@ -18,7 +17,7 @@ optional image per review.
 | `.github/workflows/` | Pull-request checks and guarded future Cloud Run release workflow |
 | `.agents/skills/` | Repository-specific agent workflows |
 | `config/` | Django settings, routes, and WSGI/ASGI entry points |
-| `accounts/` | Initial custom Django user model and migration |
+| `accounts/` | Google-only account journey, eligibility adapter, custom user model, and migrations |
 | `core/`, `templates/`, `static/` | Public homepage, reusable image-asset workflow, templates, and browser assets |
 | `reviews/` | Public dish-review model, form, explicit image association, admin registration, and migrations |
 | `docs/` | Living implementation specifications, plans, and architecture decisions, including the [dish reviews MVP plan](docs/dish-reviews-plan.md) |
@@ -45,7 +44,7 @@ optional image per review.
    docker compose up --build web
    ```
 
-   Open <http://localhost:8000/> in a browser. Stop the services and remove their disposable local data with `docker compose down --volumes --remove-orphans`.
+   Open <http://127.0.0.1:8000/> in a browser. Stop the services and remove their disposable local data with `docker compose down --volumes --remove-orphans`.
 
 6. Run the normal non-Docker checks. These use SQLite by default and skip the opt-in
    Chromium test. Set debug mode explicitly in this shell; Django otherwise requires
@@ -93,15 +92,13 @@ stored in the private configured object-storage bucket; PostgreSQL stores the
 UUID-based object key and image metadata. They are never stored in `STATIC_ROOT`
 or as database blobs.
 
-When `DJANGO_DEBUG=false`, uploads require an authenticated user and the asset is
-owned by that user. Anonymous uploads are available only while `DJANGO_DEBUG=true`
-is explicitly set for disposable local development. A newly uploaded asset is private. Django signs a
+Uploads always require an eligible Google-authenticated user and the asset is owned
+by that user. A newly uploaded asset is private. Django signs a
 five-minute object-storage URL only for its owner in the draft view, or for a future
 public feature after that feature explicitly sets `published_at`. In explicit local
-debug mode, the review form can upload one image, automatically sets its alt text to
-`Photo of <dish name>`, and publishes it with the review. Non-debug anonymous review
-requests that include image data are rejected. The repository has no gallery or public
-image browsing page; future multi-image review support will extend the explicit
+debug mode, an authenticated review author can upload one image, automatically sets
+its alt text to `Photo of <dish name>`, and publishes it with the review. The repository
+has no gallery or public image browsing page; future multi-image review support will extend the explicit
 `ReviewImage` association.
 
 Local Compose uses two endpoints for the same private MinIO bucket:
@@ -144,6 +141,45 @@ storage, visibility, and retention rationale.
 
 CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, Chromium homepage and image-workflow smoke tests, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
 
+## Google-only accounts and access levels
+
+The homepage and published review feed are `public` read-only features. Review
+submission, review images, image uploads, and private image details are
+`authenticated` features. Django administration is `staff/admin`: an eligible
+Google-authenticated user must also be staff. The server enforces these levels;
+template visibility is not authorization.
+
+Google is the only normal sign-in and account-creation path. The app requests only
+`openid`, `email`, and `profile`, uses PKCE, and validates Google’s provider-verified
+email against the configured allowlist before creating or using an account. It does
+not expose local signup, password login, password reset, account connection, or
+provider-disconnection routes.
+
+### Local OAuth setup
+
+Create a Google OAuth Web application and register exactly:
+
+```text
+http://127.0.0.1:8000/accounts/google/login/callback/
+```
+
+Put the client ID and secret in an untracked `.env`:
+
+```dotenv
+GOOGLE_OAUTH_CLIENT_ID=your-local-client-id
+GOOGLE_OAUTH_CLIENT_SECRET=your-local-client-secret
+GOOGLE_OAUTH_ALLOWED_EMAIL_DOMAINS=csuchico.edu
+```
+
+Use `docker compose up --build web`, open `http://127.0.0.1:8000/`, and choose
+“Continue with Google.” `localhost` and `127.0.0.1` are different OAuth origins.
+Automated tests use provider fixtures and never real credentials.
+
+Normal staff access also starts through Google. A password superuser is an
+operator-controlled break-glass mechanism only: use the local/server console or an
+approved management procedure to create or repair it, record its use, and never
+expose a password login route to users.
+
 ## Dish reviews MVP
 
 The homepage keeps its existing welcome content and adds a review form plus a newest-first feed. A review requires:
@@ -153,11 +189,10 @@ The homepage keeps its existing welcome content and adds a review form plus a ne
 - A whole 1–5 star rating: Bad, Mediocre, Fine, Good, or Amazing
 - Review text (up to 500 characters)
 
-Reviews publish immediately and are public. With `DJANGO_DEBUG=true`, an optional JPEG,
-PNG, or WebP image can be selected from the review form; it is automatically described
-as `Photo of <dish name>` and displayed with the review. Image uploads remain rejected
-for anonymous non-debug requests until authenticated review authors are implemented.
-This deliberately small MVP does not include accounts, a dish catalog, filtering,
+Eligible authenticated users can publish reviews immediately; reviews are public.
+With `DJANGO_DEBUG=true`, an optional JPEG, PNG, or WebP image can be selected from
+the authenticated review form; it is automatically described as `Photo of <dish name>`
+and displayed with the review. This deliberately small MVP does not include a dish catalog, filtering,
 moderation, production review-image uploads, favorites, station data, rate limiting,
 or anonymous-spam protection. See the approved [dish reviews plan](docs/dish-reviews-plan.md)
 and [review image integration plan](docs/review-image-integration-plan.md) for scope.
