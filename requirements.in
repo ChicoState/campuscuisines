@@ -6,3 +6,4 @@ psycopg[binary]==3.3.5
 django-storages[s3]==1.14.6
 boto3==1.43.98
 Pillow==12.3.0
+django-allauth[socialaccount]==65.20.0
