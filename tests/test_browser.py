@@ -80,6 +80,55 @@ def test_homepage_renders_in_chromium(live_server) -> None:
     os.getenv("RUN_BROWSER_TESTS") != "true",
     reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
 )
+def test_announcement_modal_opens_and_closes_without_navigation(live_server) -> None:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page(viewport={"width": 320, "height": 720})
+        console_errors: list[str] = []
+        page.on(
+            "console",
+            lambda message: (
+                console_errors.append(message.text) if message.type == "error" else None
+            ),
+        )
+        page.goto(live_server.url, wait_until="networkidle")
+        starting_url = page.url
+
+        trigger = page.get_by_role("button", name="Announcements")
+        trigger.click()
+
+        dialog = page.get_by_role("dialog", name="Announcements")
+        expect(dialog).to_be_visible()
+        expect(dialog.get_by_role("heading", name="Test announcement")).to_be_visible()
+        expect(dialog.get_by_text("Posted by Admin")).to_be_visible()
+        expect(dialog.locator("[data-announcement-item]")).to_have_count(1)
+        assert page.url == starting_url
+
+        dialog.get_by_role("button", name="Close announcements").click()
+        expect(dialog).to_be_hidden()
+        expect(trigger).to_be_focused()
+
+        trigger.click()
+        page.keyboard.press("Escape")
+        expect(dialog).to_be_hidden()
+        expect(trigger).to_be_focused()
+
+        trigger.click()
+        page.mouse.click(4, 4)
+        expect(dialog).to_be_hidden()
+        expect(trigger).to_be_focused()
+
+        assert page.url == starting_url
+        assert not console_errors
+        browser.close()
+
+
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
 @override_settings(DEBUG=True, STORAGES=TEST_STORAGES)
 def test_review_form_uploads_and_renders_an_image_in_chromium(
     live_server, monkeypatch: pytest.MonkeyPatch

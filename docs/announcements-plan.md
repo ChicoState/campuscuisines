@@ -24,7 +24,7 @@ current URL or navigating away from the page.
 ```sh
 export DJANGO_DEBUG=true
 python -m pytest tests/test_core.py
-RUN_BROWSER_TESTS=true python -m pytest tests/test_browser.py -k announcements
+RUN_BROWSER_TESTS=true python -m pytest tests/test_browser.py -k announcement
 ruff format --check .
 ruff check .
 pyright
