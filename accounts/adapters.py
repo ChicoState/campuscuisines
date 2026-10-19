@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import Any, NoReturn, cast
 
+from allauth.account.adapter import get_adapter as get_account_adapter
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.models import SocialAccount, SocialLogin
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponseForbidden
 
 from .models import User
@@ -34,7 +36,10 @@ class GoogleOnlySocialAccountAdapter(DefaultSocialAccountAdapter):
         email = extra_data.get("email")
         if not isinstance(email, str) or not email.strip():
             self._deny()
-        if extra_data.get("email_verified") is not True:
+        if not (
+            extra_data.get("email_verified") is True
+            or extra_data.get("verified_email") is True
+        ):
             self._deny()
 
         normalized_email = email.strip().lower()
@@ -44,6 +49,11 @@ class GoogleOnlySocialAccountAdapter(DefaultSocialAccountAdapter):
             self._deny()
         allowed_domains = settings.GOOGLE_OAUTH_ALLOWED_EMAIL_DOMAINS
         if not local_part or domain not in allowed_domains:
+            self._deny()
+        try:
+            User._meta.get_field("email").clean(normalized_email, None)  # type: ignore[reportAttributeAccessIssue]
+            User._meta.get_field("username").clean(local_part, None)  # type: ignore[reportAttributeAccessIssue]
+        except ValidationError:
             self._deny()
         return normalized_email, local_part
 
@@ -55,9 +65,11 @@ class GoogleOnlySocialAccountAdapter(DefaultSocialAccountAdapter):
                 self._deny()
             return
 
-        if User.objects.filter(username=username).exists():
+        try:
+            get_account_adapter(request).clean_username(username)
+        except ValidationError:
             self._deny()
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(email__iexact=email).exists():
             self._deny()
 
         user = cast(User, sociallogin.user)

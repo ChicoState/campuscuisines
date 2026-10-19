@@ -136,6 +136,28 @@ def test_anonymous_homepage_is_public_but_review_submission_is_authenticated(
 
 
 @pytest.mark.django_db
+def test_ineligible_signed_in_user_cannot_submit_a_review(client) -> None:
+    outsider = User.objects.create_user(
+        username="outsider", email="outsider@gmail.com", password="unused"
+    )
+    client.force_login(outsider)
+
+    response = client.post(
+        reverse("home"),
+        {
+            "dish_name": "Mushroom ramen",
+            "reviewer_name": "Avery",
+            "rating": 4,
+            "text": "Warm, savory, and excellent.",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.url == "/accounts/login/?next=/"
+    assert not Review.objects.exists()  # type: ignore[reportAttributeAccessIssue]
+
+
+@pytest.mark.django_db
 def test_homepage_lists_newest_review_first_and_escapes_review_text(client) -> None:
     older = Review.objects.create(  # type: ignore[reportAttributeAccessIssue]
         dish_name="Older dish",

@@ -57,6 +57,24 @@ def test_non_debug_mode_rejects_anonymous_image_uploads(client) -> None:
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True, STORAGES=TEST_STORAGES)
+def test_debug_mode_rejects_ineligible_signed_in_image_uploads(client) -> None:
+    outsider = User.objects.create_user(
+        username="outsider", email="outsider@gmail.com", password="unused"
+    )
+    client.force_login(outsider)
+
+    response = client.post(
+        reverse("image-upload"),
+        {"file": valid_image(), "alt_text": "A campus meal"},
+    )
+
+    assert response.status_code == 302
+    assert response.url == f"/accounts/login/?next={reverse('image-upload')}"
+    assert not ImageAsset.objects.exists()
+
+
+@pytest.mark.django_db
 @override_settings(DEBUG=False, STORAGES=TEST_STORAGES)
 def test_non_debug_mode_records_the_authenticated_uploader(client) -> None:
     user = User.objects.create_user(

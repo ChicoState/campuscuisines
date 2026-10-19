@@ -3,6 +3,7 @@ from typing import cast
 import pytest
 from allauth.socialaccount.models import EmailAddress, SocialAccount, SocialLogin
 from django.http import HttpRequest
+from django.test import override_settings
 
 from accounts.adapters import GoogleOnlySocialAccountAdapter
 from accounts.models import User
@@ -51,6 +52,28 @@ def test_verified_google_identity_populates_immutable_fields() -> None:
 
 
 @pytest.mark.django_db
+def test_google_userinfo_verified_email_is_accepted() -> None:
+    login = social_login()
+    extra_data = cast(dict[str, object], login.account.extra_data)  # type: ignore[reportAttributeAccessIssue]
+    extra_data.pop("email_verified")
+    extra_data["verified_email"] = True
+
+    GoogleOnlySocialAccountAdapter().pre_social_login(HttpRequest(), login)
+
+    assert cast(User, login.user).email == "student@csuchico.edu"
+
+
+@pytest.mark.django_db
+def test_overlong_email_local_part_is_denied_without_username_fallback() -> None:
+    login = social_login(email=f"{'a' * 151}@csuchico.edu")
+
+    with pytest.raises(GoogleOnlySocialAccountAdapter.denial_exception):
+        GoogleOnlySocialAccountAdapter().pre_social_login(HttpRequest(), login)
+
+    assert not User.objects.exists()
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     ("provider", "email", "verified"),
     [
@@ -85,6 +108,27 @@ def test_existing_username_collision_is_rejected_without_creating_a_user() -> No
         adapter.pre_social_login(HttpRequest(), social_login())
 
     assert User.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_case_insensitive_username_collision_is_rejected() -> None:
+    User.objects.create_user(
+        username="Student", email="other@csuchico.edu", password="unused"
+    )
+
+    with pytest.raises(GoogleOnlySocialAccountAdapter.denial_exception):
+        GoogleOnlySocialAccountAdapter().pre_social_login(HttpRequest(), social_login())
+
+    assert User.objects.count() == 1
+
+
+@pytest.mark.django_db
+@override_settings(ACCOUNT_USERNAME_BLACKLIST=["student"])
+def test_disallowed_username_is_denied_without_allauth_fallback() -> None:
+    with pytest.raises(GoogleOnlySocialAccountAdapter.denial_exception):
+        GoogleOnlySocialAccountAdapter().pre_social_login(HttpRequest(), social_login())
+
+    assert not User.objects.exists()
 
 
 @pytest.mark.django_db

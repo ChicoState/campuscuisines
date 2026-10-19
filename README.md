@@ -180,6 +180,36 @@ operator-controlled break-glass mechanism only: use the local/server console or 
 approved management procedure to create or repair it, record its use, and never
 expose a password login route to users.
 
+### Staff permissions
+
+An operator can grant limited admin access after the person has signed in through
+Google once. In production, run an approved, audited `manage.py shell` job with
+access to the production database; the deployment mechanism for that job is not
+implemented yet. For review moderation, an example is:
+
+```python
+from accounts.models import User
+from django.contrib.auth.models import Group, Permission
+
+user = User.objects.get(email="moderator@csuchico.edu")
+group, _ = Group.objects.get_or_create(name="review-moderators")
+group.permissions.add(
+    *Permission.objects.filter(
+        content_type__app_label="reviews",
+        codename__in=["view_review", "change_review"],
+    )
+)
+user.is_staff = True
+user.save(update_fields=["is_staff"])
+user.groups.add(group)
+```
+
+Check the group's existing permissions before assigning it; remove group membership
+and clear `is_staff` when access ends. Staff can administer only models for which
+they have permissions. Managing user accounts is reserved for eligible superusers,
+even when another staff member has `accounts` model permissions. Do not grant
+`is_superuser` for routine moderation or enable a public password login route.
+
 ## Dish reviews MVP
 
 The homepage keeps its existing welcome content and adds a review form plus a newest-first feed. A review requires:

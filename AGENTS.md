@@ -82,6 +82,8 @@ specification: `public` (explicit read-only anonymous access), `authenticated`
 unclassified feature as `authenticated`; client-side visibility is never an
 authorization boundary. Google OAuth is the only normal account creation/sign-in
 path and the server must enforce the configured eligible-email domains.
+Account administration is superuser-only; routine staff receive specific model
+permissions through an operator-controlled procedure.
 
 ## Change checklist
 
