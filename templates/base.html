@@ -10,13 +10,47 @@
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
-      <div class="page-width">
+      <div class="page-width site-header__inner">
         <a class="brand" href="{% url 'home' %}">Campus Cuisines</a>
+        <button
+          type="button"
+          class="announcements-trigger"
+          aria-haspopup="dialog"
+          aria-controls="announcement-dialog"
+          data-announcement-open
+        >Announcements</button>
       </div>
     </header>
+    <dialog
+      id="announcement-dialog"
+      class="announcement-dialog"
+      aria-labelledby="announcement-dialog-title"
+      data-announcement-dialog
+    >
+      <div class="announcement-dialog__panel">
+        <div class="announcement-dialog__heading">
+          <div>
+            <p class="eyebrow">Latest update</p>
+            <h2 id="announcement-dialog-title">Announcements</h2>
+          </div>
+          <button
+            type="button"
+            class="announcement-dialog__close"
+            aria-label="Close announcements"
+            data-announcement-close
+          >Close</button>
+        </div>
+        <article class="announcement" data-announcement-item>
+          <h3>Test announcement</h3>
+          <p class="announcement__meta">Posted by Admin</p>
+          <p>This is a test announcement.</p>
+        </article>
+      </div>
+    </dialog>
     <main id="main-content" class="page-width">
       {% block content %}{% endblock %}
     </main>
+    <script src="{% static 'core/announcements.js' %}" defer></script>
     {% block scripts %}{% endblock %}
   </body>
 </html>
