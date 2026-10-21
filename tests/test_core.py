@@ -28,19 +28,65 @@ def test_homepage_renders_five_rating_stars(client) -> None:
 
 
 @pytest.mark.django_db
-def test_homepage_offers_configured_tags_as_checkboxes(client) -> None:
-    category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+def test_homepage_offers_tags_in_a_collapsible_grouped_multi_select(client) -> None:
+    allergen_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
         name="Allergens"
     )
-    Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        category=category, name="Contains peanuts"
+    peanuts = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=allergen_category, name="Contains peanuts"
+    )
+    dietary_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Dietary"
+    )
+    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=dietary_category, name="Vegetarian"
     )
 
     response = client.get(reverse("home"))
 
     content = response.content.decode()
+    assert '<details class="tag-dropdown"' in content
+    assert 'data-tags-summary="0 tags selected"' in content
+    assert (
+        'class="tag-dropdown__category" id="tag-category-1">Allergens</h3>' in content
+    )
+    assert 'class="tag-dropdown__category" id="tag-category-2">Dietary</h3>' in content
+    assert f'id="id_tags_{peanuts.pk}"' in content
+    assert f'id="id_tags_{vegetarian.pk}"' in content
+    assert 'name="tags"' in content
     assert 'type="checkbox"' in content
-    assert "Allergens: Contains peanuts" in content
+    assert "data-tags-summary" in content
+    assert "Allergens: Contains peanuts" not in content
+
+
+@pytest.mark.django_db
+def test_invalid_tag_submission_preserves_selected_tags_and_opens_dropdown(
+    client,
+) -> None:
+    category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Dietary"
+    )
+    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=category, name="Vegetarian"
+    )
+
+    response = client.post(
+        reverse("home"),
+        {
+            "dish_name": "Mushroom ramen",
+            "reviewer_name": "Avery",
+            "rating": 0,
+            "text": "Warm, savory, and excellent.",
+            "tags": [str(vegetarian.pk)],
+        },
+    )
+
+    content = response.content.decode()
+    assert response.status_code == 200
+    assert '<details class="tag-dropdown" open>' in content
+    assert f'id="id_tags_{vegetarian.pk}"' in content
+    assert f'value="{vegetarian.pk}"\n                      checked' in content
+    assert 'data-tags-summary="1 tag selected"' in content
 
 
 @pytest.mark.django_db

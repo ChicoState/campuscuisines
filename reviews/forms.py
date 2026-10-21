@@ -1,3 +1,5 @@
+from itertools import groupby
+
 from django import forms
 from django.core.exceptions import ValidationError
 
@@ -30,7 +32,25 @@ class ReviewForm(forms.ModelForm):
     def __init__(self, *args, allow_image_upload: bool = False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.allow_image_upload = allow_image_upload
-        self.fields["tags"].queryset = Tag.objects.select_related("category")
+        tags = Tag.objects.select_related("category")
+        self.fields["tags"].queryset = tags
+        self.tag_groups = [
+            {
+                "name": category_name,
+                "tags": list(category_tags),
+            }
+            for category_name, category_tags in groupby(
+                tags, key=lambda tag: tag.category.name
+            )
+        ]
+        selected_tags = self["tags"].value() or []
+        selected_tag_ids = {str(tag_id) for tag_id in selected_tags}
+        self.selected_tag_ids = {
+            str(tag.pk)
+            for group in self.tag_groups
+            for tag in group["tags"]
+            if str(tag.pk) in selected_tag_ids
+        }
 
     def clean_image(self):
         image = self.cleaned_data.get("image")
