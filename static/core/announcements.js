@@ -1,25 +1,18 @@
-const announcementDialog = document.querySelector("[data-announcement-dialog]");
-const announcementOpenButton = document.querySelector("[data-announcement-open]");
-const announcementCloseButton = document.querySelector("[data-announcement-close]");
+(() => {
+  const dialog = document.querySelector("[data-announcement-dialog]");
+  const trigger = document.querySelector("[data-announcement-open]");
+  const closeButton = document.querySelector("[data-announcement-close]");
 
-if (announcementDialog && announcementOpenButton && announcementCloseButton) {
-  announcementOpenButton.addEventListener("click", () => {
-    if (!announcementDialog.open) {
-      announcementDialog.showModal();
-    }
-  });
+  if (!dialog || !trigger || !closeButton) return;
 
-  announcementCloseButton.addEventListener("click", () => {
-    announcementDialog.close();
-  });
+  const closeDialog = () => {
+    dialog.close();
+    trigger.focus();
+  };
 
-  announcementDialog.addEventListener("click", (event) => {
-    if (event.target === announcementDialog) {
-      announcementDialog.close();
-    }
+  trigger.addEventListener("click", () => dialog.showModal());
+  closeButton.addEventListener("click", closeDialog);
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) closeDialog();
   });
-
-  announcementDialog.addEventListener("close", () => {
-    announcementOpenButton.focus();
-  });
-}
+})();

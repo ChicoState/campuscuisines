@@ -18,7 +18,11 @@
           aria-haspopup="dialog"
           aria-controls="announcement-dialog"
           data-announcement-open
-        >Announcements</button>
+        >
+          <span class="announcements-trigger__icon" aria-hidden="true">♢</span>
+          <span>Announcements</span>
+          <span class="announcements-trigger__count" aria-label="{{ announcement_count }} announcements">{{ announcement_count }}</span>
+        </button>
       </div>
     </header>
     <dialog
@@ -40,11 +44,29 @@
             data-announcement-close
           >Close</button>
         </div>
-        <article class="announcement" data-announcement-item>
-          <h3>Test announcement</h3>
-          <p class="announcement__meta">Posted by Admin</p>
-          <p>This is a test announcement.</p>
-        </article>
+        <div class="announcement-dialog__actions">
+          <a href="{% url 'announcement-history' %}">View announcement history</a>
+        </div>
+        <div data-announcement-list>
+          {% for announcement in announcement_items %}
+            <article class="announcement" data-announcement-item>
+              <div class="announcement__heading">
+                <div>
+                  <h3>{{ announcement.title }}</h3>
+                  <p class="announcement__meta">Posted by {{ announcement.author_name }}</p>
+                </div>
+                <form method="post" action="{% url 'announcement-dismiss' announcement.pk %}" class="announcement__dismiss-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <button type="submit" class="announcement__dismiss" aria-label="Dismiss {{ announcement.title }}">×</button>
+                </form>
+              </div>
+              <p>{{ announcement.body|linebreaksbr }}</p>
+            </article>
+          {% empty %}
+            <p class="announcement-empty" data-announcement-empty>No new announcements.</p>
+          {% endfor %}
+        </div>
       </div>
     </dialog>
     <main id="main-content" class="page-width">
