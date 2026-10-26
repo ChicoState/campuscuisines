@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Announcement history · Campus Cuisines{% endblock %}
+
+{% block content %}
+  <section class="history-page" aria-labelledby="history-heading">
+    <p class="eyebrow">Updates from the team</p>
+    <h1 id="history-heading">Announcement history</h1>
+    <p class="intro">Review current and past announcements from Campus Cuisines.</p>
+    {% if announcements %}
+      <ol class="announcement-history-list">
+        {% for announcement in announcements %}
+          <li class="announcement-history-item">
+            <div class="announcement__heading">
+              <div>
+                <h2>{{ announcement.title }}</h2>
+                <p class="announcement__meta">Posted by {{ announcement.author_name }}</p>
+              </div>
+              {% if not announcement.is_active %}<span class="announcement-history-item__status">Archived</span>{% endif %}
+            </div>
+            <p>{{ announcement.body|linebreaksbr }}</p>
+            <time datetime="{{ announcement.created_at|date:'c' }}">{{ announcement.created_at|date:"F j, Y" }}</time>
+            {% if request.user.is_staff %}
+              <form method="post" action="{% url 'announcement-reannounce' announcement.pk %}" class="announcement-history-item__action">
+                {% csrf_token %}
+                <button type="submit">Reannounce</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="empty-state">No announcements yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}
