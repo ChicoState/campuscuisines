@@ -10,13 +10,69 @@
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
-      <div class="page-width">
+      <div class="page-width site-header__inner">
         <a class="brand" href="{% url 'home' %}">Campus Cuisines</a>
+        <button
+          type="button"
+          class="announcements-trigger"
+          aria-haspopup="dialog"
+          aria-controls="announcement-dialog"
+          data-announcement-open
+        >
+          <span class="announcements-trigger__icon" aria-hidden="true">♢</span>
+          <span>Announcements</span>
+          <span class="announcements-trigger__count" aria-label="{{ announcement_count }} announcements">{{ announcement_count }}</span>
+        </button>
       </div>
     </header>
+    <dialog
+      id="announcement-dialog"
+      class="announcement-dialog"
+      aria-labelledby="announcement-dialog-title"
+      data-announcement-dialog
+    >
+      <div class="announcement-dialog__panel">
+        <div class="announcement-dialog__heading">
+          <div>
+            <p class="eyebrow">Latest update</p>
+            <h2 id="announcement-dialog-title">Announcements</h2>
+          </div>
+          <button
+            type="button"
+            class="announcement-dialog__close"
+            aria-label="Close announcements"
+            data-announcement-close
+          >Close</button>
+        </div>
+        <div class="announcement-dialog__actions">
+          <a href="{% url 'announcement-history' %}">View announcement history</a>
+        </div>
+        <div data-announcement-list>
+          {% for announcement in announcement_items %}
+            <article class="announcement" data-announcement-item>
+              <div class="announcement__heading">
+                <div>
+                  <h3>{{ announcement.title }}</h3>
+                  <p class="announcement__meta">Posted by {{ announcement.author_name }}</p>
+                </div>
+                <form method="post" action="{% url 'announcement-dismiss' announcement.pk %}" class="announcement__dismiss-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <button type="submit" class="announcement__dismiss" aria-label="Dismiss {{ announcement.title }}">×</button>
+                </form>
+              </div>
+              <p>{{ announcement.body|linebreaksbr }}</p>
+            </article>
+          {% empty %}
+            <p class="announcement-empty" data-announcement-empty>No new announcements.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </dialog>
     <main id="main-content" class="page-width">
       {% block content %}{% endblock %}
     </main>
+    <script src="{% static 'core/announcements.js' %}" defer></script>
     {% block scripts %}{% endblock %}
   </body>
 </html>

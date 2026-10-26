@@ -11,6 +11,7 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 - `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
 - `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
 - `reviews/`: public dish-review model, form, explicit review-image association, admin registration, and migrations.
+- `announcements/`: database-backed announcements, per-user/session dismissals, history page, and admin registration.
 - `docs/`: living specifications and approved implementation plans, including
   `dish-reviews-plan.md`, `image-upload-plan.md`, and storage-lifecycle decisions.
 - Restaurants, menu items, galleries, publishing endpoints, and other product models: not created yet.
