@@ -12,6 +12,7 @@ from playwright.sync_api import expect, sync_playwright
 
 from accounts.models import User
 from core.models import ImageAsset
+from reviews.models import Review, Tag, TagCategory
 
 TEST_STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
@@ -31,6 +32,19 @@ ONE_PIXEL_PNG = base64.b64decode(
     reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
 )
 def test_homepage_renders_in_chromium(live_server) -> None:
+    meat_type_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Meat type"
+    )
+    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=meat_type_category, name="Vegetarian"
+    )
+    dietary_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Dietary"
+    )
+    spicy = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=dietary_category, name="Spicy"
+    )
+
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page()
@@ -64,6 +78,18 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         )
         expect(page.locator(".rating-picker__star--filled")).to_have_count(4)
         page.get_by_label("Your review").fill("Warm, savory, and excellent.")
+        tag_dropdown = page.locator(".tag-dropdown")
+        tag_dropdown.locator("summary").click()
+        vegetarian_tag = page.get_by_label("Vegetarian")
+        spicy_tag = page.get_by_label("Spicy")
+        vegetarian_tag.check()
+        spicy_tag.check()
+        expect(page.locator("[data-tags-summary]")).to_have_text("2 tags selected")
+        tag_dropdown.locator("summary").click()
+        expect(tag_dropdown).not_to_have_attribute("open", "")
+        tag_dropdown.locator("summary").click()
+        expect(vegetarian_tag).to_be_checked()
+        expect(spicy_tag).to_be_checked()
         page.get_by_role("button", name="Publish review").click()
         expect(page.get_by_role("heading", name="Mushroom ramen")).to_be_visible()
         expect(page.locator(".review__rating")).to_contain_text("4 out of 5 stars")
@@ -72,6 +98,9 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         expect(page.locator("link[href*='core/site.css']")).to_have_count(1)
         assert not console_errors
         browser.close()
+
+    review = Review.objects.get()  # type: ignore[reportAttributeAccessIssue]
+    assert list(review.tags.all()) == [spicy, vegetarian]
 
 
 @pytest.mark.browser
