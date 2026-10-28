@@ -15,28 +15,87 @@ from reviews.models import Review, ReviewImage
 
 def home(request):
     if request.method == "POST":
-        form = ReviewForm(
-            request.POST, request.FILES, allow_image_upload=settings.DEBUG
-        )
-        if form.is_valid():
-            with transaction.atomic():  # type: ignore[reportGeneralTypeIssues]
-                review = form.save()
-                image = form.cleaned_data["image"]
-                if image is not None:
-                    asset = ImageAsset(
-                        file=image,
-                        alt_text=f"Photo of {review.dish_name}",
-                    )
-                    asset.full_clean()
-                    asset.save()
-                    ReviewImage.objects.create(review=review, image=asset)
-                    ImageAsset.objects.filter(pk=asset.pk).update(
-                        published_at=timezone.now()
-                    )
-            return redirect("home")
-    else:
-        form = ReviewForm(allow_image_upload=settings.DEBUG)
+        return _handle_review_submission(request)
 
+    reviews = _reviews_with_images()[:3]
+
+    return render(
+        request,
+        "core/home.html",
+        {"reviews": reviews},
+    )
+
+
+def reviews(request):
+    if request.method == "POST":
+        return _handle_review_submission(request)
+
+    return render(
+        request,
+        "core/reviews.html",
+        {
+            "form": ReviewForm(allow_image_upload=settings.DEBUG),
+            "allow_image_upload": settings.DEBUG,
+            "reviews": _reviews_with_images(),
+        },
+    )
+
+
+def images(request):
+    image_items = [
+        {"asset": asset, "url": signed_image_url(asset, request.user)}
+        for asset in ImageAsset.objects.filter(published_at__isnull=False)
+    ]
+    return render(
+        request,
+        "core/images.html",
+        {"image_items": image_items, "allow_image_upload": settings.DEBUG},
+    )
+
+
+def map_locations(request):
+    return render(request, "core/map.html")
+
+
+def about(request):
+    return render(request, "core/about.html")
+
+
+def account(request):
+    return render(request, "core/account.html")
+
+
+def _handle_review_submission(request):
+    form = ReviewForm(request.POST, request.FILES, allow_image_upload=settings.DEBUG)
+    if form.is_valid():
+        with transaction.atomic():  # type: ignore[reportGeneralTypeIssues]
+            review = form.save()
+            image = form.cleaned_data["image"]
+            if image is not None:
+                asset = ImageAsset(
+                    file=image,
+                    alt_text=f"Photo of {review.dish_name}",
+                )
+                asset.full_clean()
+                asset.save()
+                ReviewImage.objects.create(review=review, image=asset)
+                ImageAsset.objects.filter(pk=asset.pk).update(
+                    published_at=timezone.now()
+                )
+        return redirect("reviews")
+
+    return render(
+        request,
+        "core/reviews.html",
+        {
+            "form": form,
+            "allow_image_upload": settings.DEBUG,
+            "reviews": _reviews_with_images(),
+        },
+    )
+
+
+def _reviews_with_images():
     review_images = Prefetch(
         "image_links",
         queryset=ReviewImage.objects.select_related("image").filter(
@@ -51,16 +110,7 @@ def home(request):
     for review in reviews:
         for review_image in review.published_images:
             review_image.url = signed_image_url(review_image.image, None)
-
-    return render(
-        request,
-        "core/home.html",
-        {
-            "form": form,
-            "allow_image_upload": settings.DEBUG,
-            "reviews": reviews,
-        },
-    )
+    return reviews
 
 
 def image_upload(request):

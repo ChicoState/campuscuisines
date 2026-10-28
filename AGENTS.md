@@ -8,12 +8,12 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 
 - `config/`: Django settings, routing, and WSGI/ASGI entry points.
 - `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
-- `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
+- `core/`, `templates/`, `static/`: public landing page, modular navigation pages, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
 - `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
 - `reviews/`: public dish-review model, form, explicit review-image association, admin registration, and migrations.
 - `docs/`: living specifications and approved implementation plans, including
   `dish-reviews-plan.md`, `image-upload-plan.md`, and storage-lifecycle decisions.
-- Restaurants, menu items, galleries, publishing endpoints, and other product models: not created yet.
+- Restaurants, menu items, publishing endpoints, and other product models: not created yet. The public `/images/` page is a read-only gallery of already-published image assets.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
 - `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local Django/PostgreSQL/MinIO services and production-image configuration.
 - `scripts/`: configuration verifier and Compose smoke test.

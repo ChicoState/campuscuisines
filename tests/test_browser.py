@@ -43,10 +43,12 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         )
 
         page.goto(live_server.url, wait_until="networkidle")
-
         expect(
             page.get_by_role("heading", name="Welcome to Campus Cuisines")
         ).to_be_visible()
+        page.get_by_role("link", name="Reviews").click()
+        page.get_by_role("button", name="Make a review").click()
+
         expect(page.get_by_text("No reviews yet")).to_be_visible()
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")
@@ -102,7 +104,8 @@ def test_review_form_uploads_and_renders_an_image_in_chromium(
             ),
         )
 
-        page.goto(live_server.url, wait_until="networkidle")
+        page.goto(f"{live_server.url}/reviews/", wait_until="networkidle")
+        page.get_by_role("button", name="Make a review").click()
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")
         page.get_by_label("4 out of 5 stars — Good").click()

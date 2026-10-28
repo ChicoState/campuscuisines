@@ -12,16 +12,16 @@ from reviews.models import Review
 
 
 @pytest.mark.django_db
-def test_homepage_shows_an_empty_review_feed(client) -> None:
-    response = client.get(reverse("home"))
+def test_reviews_page_shows_an_empty_review_feed(client) -> None:
+    response = client.get(reverse("reviews"))
 
     assert response.status_code == 200
     assert "No reviews yet" in response.content.decode()
 
 
 @pytest.mark.django_db
-def test_homepage_renders_five_rating_stars(client) -> None:
-    response = client.get(reverse("home"))
+def test_reviews_page_renders_five_rating_stars(client) -> None:
+    response = client.get(reverse("reviews"))
 
     content = response.content.decode()
     assert content.count('class="rating-picker__star" data-rating-star=') == 5
@@ -120,7 +120,7 @@ def test_homepage_lists_newest_review_first_and_escapes_review_text(client) -> N
         created_at=timezone.now() - timedelta(days=1)
     )
 
-    response = client.get(reverse("home"))
+    response = client.get(reverse("reviews"))
 
     content = response.content.decode()
     assert content.index("Newer dish") < content.index("Older dish")
@@ -150,3 +150,27 @@ def test_rating_picker_uses_visible_star_glyphs_with_a_contrasting_color() -> No
     stylesheet = Path(stylesheet_path).read_text()
     assert "color: var(--color-muted)" in stylesheet
     assert "clip-path" not in stylesheet
+
+
+def test_review_section_headings_stack_their_label_title_and_action() -> None:
+    stylesheet_path = cast(str | None, finders.find("core/site.css"))
+
+    assert stylesheet_path is not None
+    stylesheet = Path(stylesheet_path).read_text()
+    heading_rules = stylesheet.split(".reviews-section__heading {", 1)[1].split("}", 1)[
+        0
+    ]
+
+    assert "display: grid" in heading_rules
+    assert "justify-items: start" in heading_rules
+
+
+def test_home_welcome_spacing_matches_other_page_sections() -> None:
+    stylesheet_path = cast(str | None, finders.find("core/site.css"))
+
+    assert stylesheet_path is not None
+    stylesheet = Path(stylesheet_path).read_text()
+    welcome_rules = stylesheet.split(".welcome {", 1)[1].split("}", 1)[0]
+
+    assert "padding-block: var(--space-12)" in welcome_rules
+    assert "clamp(" not in welcome_rules

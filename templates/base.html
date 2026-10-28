@@ -11,7 +11,18 @@
     <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
       <div class="page-width">
-        <a class="brand" href="{% url 'home' %}">Campus Cuisines</a>
+        <div class="site-header__topline">
+          <a class="brand" href="{% url 'home' %}">Campus Cuisines</a>
+          <nav aria-label="Primary navigation">
+            <ul class="primary-navigation">
+              {% for item in navigation_items %}
+                <li>
+                  <a href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a>
+                </li>
+              {% endfor %}
+            </ul>
+          </nav>
+        </div>
       </div>
     </header>
     <main id="main-content" class="page-width">
