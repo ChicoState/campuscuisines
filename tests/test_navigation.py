@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.models import ImageAsset
+from reviews.models import Review, Tag, TagCategory
 
 
 @pytest.mark.django_db
@@ -149,3 +150,55 @@ def test_legacy_home_review_submission_redirects_to_reviews(client) -> None:
 
     assert response.status_code == 302
     assert response.url == reverse("reviews")
+
+
+@pytest.mark.django_db
+def test_reviews_page_offers_grouped_tags_and_saves_selected_tags(client) -> None:
+    category = TagCategory.objects.create(name="Dietary")
+    vegetarian = Tag.objects.create(category=category, name="Vegetarian")
+
+    response = client.get(reverse("reviews"))
+
+    content = response.content.decode()
+    assert '<details class="tag-dropdown"' in content
+    assert 'data-tags-summary="0 tags selected"' in content
+    assert 'class="tag-dropdown__category" id="tag-category-1">Dietary</h3>' in content
+    assert f'id="id_tags_{vegetarian.pk}"' in content
+
+    response = client.post(
+        reverse("reviews"),
+        {
+            "dish_name": "Mushroom ramen",
+            "reviewer_name": "Avery",
+            "rating": 4,
+            "text": "Warm, savory, and excellent.",
+            "tags": [str(vegetarian.pk)],
+        },
+    )
+
+    review = Review.objects.get()
+    assert response.status_code == 302
+    assert list(review.tags.all()) == [vegetarian]
+
+
+@pytest.mark.django_db
+def test_invalid_review_preserves_selected_tags_and_opens_dropdown(client) -> None:
+    category = TagCategory.objects.create(name="Dietary")
+    vegetarian = Tag.objects.create(category=category, name="Vegetarian")
+
+    response = client.post(
+        reverse("reviews"),
+        {
+            "dish_name": "Mushroom ramen",
+            "reviewer_name": "Avery",
+            "rating": 0,
+            "text": "Warm, savory, and excellent.",
+            "tags": [str(vegetarian.pk)],
+        },
+    )
+
+    content = response.content.decode()
+    assert response.status_code == 200
+    assert '<details class="tag-dropdown" open>' in content
+    assert f'value="{vegetarian.pk}"\n                      checked' in content
+    assert 'data-tags-summary="1 tag selected"' in content
