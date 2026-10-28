@@ -163,6 +163,13 @@ def test_review_section_headings_stack_their_label_title_and_action() -> None:
 
     assert "display: grid" in heading_rules
     assert "justify-items: start" in heading_rules
+    assert "gap: var(--space-2)" in heading_rules
+
+    assert ".reviews-section__action" in stylesheet
+    action_rules = stylesheet.split(".reviews-section__action {", 1)[1].split("}", 1)[
+        0
+    ]
+    assert "margin-top: var(--space-4)" in action_rules
 
 
 def test_home_welcome_spacing_matches_other_page_sections() -> None:
