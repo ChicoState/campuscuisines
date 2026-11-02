@@ -229,7 +229,7 @@ With `DJANGO_DEBUG=true`, an optional JPEG, PNG, or WebP image can be selected f
 the authenticated review form; it is automatically described as `Photo of <dish name>`
 and displayed with the review. This deliberately small MVP does not include a dish catalog, filtering,
 moderation, production review-image uploads, favorites, station data, rate limiting,
-or anonymous-spam protection. See the approved [dish reviews plan](docs/dish-reviews-plan.md)
+or spam protection. See the approved [dish reviews plan](docs/dish-reviews-plan.md)
 and [review image integration plan](docs/review-image-integration-plan.md) for scope.
 
 ## Troubleshooting

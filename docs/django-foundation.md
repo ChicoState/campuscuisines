@@ -1,5 +1,9 @@
 # Django Foundation Specification
 
+This document records the original application foundation. For the current
+account flow and access policy, see `google-accounts-plan.md`; the current
+repository map is in `AGENTS.md`.
+
 ## Objective
 
 Provide a small, browser-visible Django application foundation that the team can

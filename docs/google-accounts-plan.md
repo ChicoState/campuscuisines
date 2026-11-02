@@ -5,6 +5,10 @@
 Approved for implementation on 2026-10-16. This document is the source of truth
 for the first account feature and its Google OAuth setup.
 
+Implementation gap: unexpected username collisions are denied by the server, but
+the current generic denial response does not tell the user to contact an
+administrator as the approved product decision below requires.
+
 ## Objective
 
 Campus Cuisines remains publicly browseable, while only active `@csuchico.edu`
@@ -78,6 +82,11 @@ logout action. Do not expose local signup, password login, password reset, accou
 connection, or provider-disconnection journeys. Redirect unauthenticated protected
 requests to that sign-in page and preserve a safe local `next` destination.
 
+Current UI: homepage sign-in triggers open a native dialog when JavaScript is
+available. The dialog and standalone `/accounts/login/` page share the Google
+sign-in form. The standalone page remains the entry point for direct links,
+protected redirects, and browsers without JavaScript.
+
 The current homepage review form and `/images/upload/` are authenticated actions.
 Their anonymous/debug-mode exceptions must be removed; their tests and templates
 must reflect the access contract. Public review rendering stays public. Existing
@@ -124,7 +133,9 @@ deployment is not. Complete these steps in a Google Cloud project:
    not add broad, unused origins or redirect URIs.
 3. Put the generated client ID and secret in untracked `.env`, along with
    `GOOGLE_OAUTH_ALLOWED_EMAIL_DOMAINS=csuchico.edu`. Start the application with
-   `docker compose up --build web`, then use the local sign-in page in a browser.
+   `docker compose up --build web`, visit `http://127.0.0.1:8000/`, select
+   **Sign in**, then **Continue with Google** in the dialog. The standalone
+   `/accounts/login/` page also works for direct visits and protected redirects.
 4. Manually prove: eligible first sign-in creates the account; repeat sign-in uses
    the same account; logout works; an ineligible Google account is denied and does
    not create a user; anonymous review/image POSTs redirect or reject; and a
@@ -175,9 +186,10 @@ OAuth credentials.
 - Authorization regression: public pages render anonymously; review submission and
   image upload require an eligible account in both debug and non-debug settings;
   non-staff users cannot enter staff administration.
-- Browser: verify public navigation, sign-in entry visibility, logout, and
-  authenticated form availability using a test-authenticated session. Complete the
-  real Google flow manually using the local guide above.
+- Browser: verify public navigation, dialog open/close and focus behavior,
+  standalone sign-in fallback, logout, and authenticated form availability using
+  a test-authenticated session. Complete the real Google flow manually using the
+  local guide above.
 
 ## Ordered implementation tasks
 

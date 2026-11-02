@@ -7,7 +7,9 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 ## Repository map
 
 - `config/`: Django settings, routing, and WSGI/ASGI entry points.
-- `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
+- `accounts/`: custom user model, Google identity eligibility, access guards,
+  sign-in/logout views, admin entry, and migrations. Do not change
+  `AUTH_USER_MODEL` after migrations exist.
 - `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
 - `templates/account/`, `static/account/`: reusable Google sign-in content and dialog assets; preserve the standalone sign-in page for protected redirects and no-JavaScript access.
 - `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
