@@ -1,4 +1,5 @@
 import pytest
+from django.db import IntegrityError, transaction
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 
@@ -29,6 +30,47 @@ def test_anonymous_dismissal_is_saved_and_removes_announcement(client) -> None:
         announcement=announcement, session_key__isnull=False
     ).exists()
     assert client.get(reverse("home")).context["announcement_count"] == 0
+
+
+@pytest.mark.django_db
+def test_non_dismissable_announcement_has_no_dismiss_control_and_cannot_be_dismissed(
+    client,
+) -> None:
+    announcement = Announcement.objects.create(
+        title="Read-only announcement",
+        body="This announcement must remain visible.",
+        is_dismissable=False,
+    )
+
+    response = client.get(reverse("home"))
+    content = response.content.decode()
+
+    assert "Read-only announcement" in content
+    assert f'aria-label="Dismiss {announcement.title}"' not in content
+
+    response = client.post(reverse("announcement-dismiss", args=[announcement.pk]))
+
+    assert response.status_code == 404
+    assert not AnnouncementDismissal.objects.filter(announcement=announcement).exists()
+    assert client.get(reverse("home")).context["announcement_count"] == 2
+
+
+@pytest.mark.django_db
+def test_dismissal_requires_exactly_one_owner() -> None:
+    announcement = Announcement.objects.get(title="Test announcement")
+    user = User.objects.create_user(username="owner", password=get_random_string(12))
+
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():  # type: ignore[reportGeneralTypeIssues]
+            AnnouncementDismissal.objects.create(announcement=announcement)
+
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():  # type: ignore[reportGeneralTypeIssues]
+            AnnouncementDismissal.objects.create(
+                announcement=announcement,
+                user=user,
+                session_key="ambiguous-session",
+            )
 
 
 @pytest.mark.django_db

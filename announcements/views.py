@@ -1,5 +1,5 @@
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -20,14 +20,12 @@ def dismiss(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method != "POST":
         return HttpResponse(status=405)
 
-    announcement = get_object_or_404(Announcement, pk=pk, is_active=True)
-    try:
-        with transaction.atomic():  # type: ignore[reportGeneralTypeIssues]
-            AnnouncementDismissal.objects.create(
-                announcement=announcement, **_dismissal_owner(request)
-            )
-    except IntegrityError:
-        pass
+    announcement = get_object_or_404(
+        Announcement, pk=pk, is_active=True, is_dismissable=True
+    )
+    AnnouncementDismissal.objects.get_or_create(
+        announcement=announcement, **_dismissal_owner(request)
+    )
 
     next_url = request.POST.get("next", "")
     if url_has_allowed_host_and_scheme(
