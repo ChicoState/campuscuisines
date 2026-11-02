@@ -70,7 +70,7 @@
     {% else %}
       <div class="account-prompt">
         <p>Sign in with an eligible Chico State Google account to publish a review.</p>
-        <a href="{% url 'account-login' %}?next={{ request.path|urlencode }}">Continue to sign in</a>
+        <a href="{% url 'account-login' %}?next={{ request.path|urlencode }}" data-account-login-trigger>Continue to sign in</a>
       </div>
     {% endif %}
   </section>

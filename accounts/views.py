@@ -32,7 +32,6 @@ def login(request: HttpRequest) -> HttpResponse:
         "account/login.html",
         {
             "next_url": safe_next_url(request),
-            "google_login_url": reverse("google_login"),
         },
     )
 

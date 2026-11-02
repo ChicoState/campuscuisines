@@ -30,6 +30,58 @@ ONE_PIXEL_PNG = base64.b64decode(
     os.getenv("RUN_BROWSER_TESTS") != "true",
     reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
 )
+def test_sign_in_opens_a_dialog_and_preserves_the_page(live_server) -> None:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page()
+        page.goto(live_server.url, wait_until="networkidle")
+
+        sign_in = page.get_by_role("link", name="Sign in", exact=True)
+        sign_in.click()
+
+        dialog = page.get_by_role("dialog", name="Sign in to Campus Cuisines")
+        expect(dialog).to_be_visible()
+        expect(
+            dialog.get_by_role("button", name="Continue with Google")
+        ).to_be_visible()
+        expect(
+            dialog.locator('form[action="/accounts/google/login/"]')
+        ).to_have_attribute("method", "post")
+        expect(dialog.locator('input[name="next"]')).to_have_value("/")
+        expect(dialog.locator('input[name="csrfmiddlewaretoken"]')).to_have_count(1)
+        assert page.url == live_server.url + "/"
+
+        page.keyboard.press("Escape")
+        expect(dialog).not_to_be_visible()
+        expect(sign_in).to_be_focused()
+
+        page.get_by_role("link", name="Continue to sign in").click()
+        expect(dialog).to_be_visible()
+        page.set_viewport_size({"width": 320, "height": 720})
+        assert dialog.evaluate(
+            "element => element.getBoundingClientRect().right <= window.innerWidth"
+        )
+        dialog.get_by_role("button", name="Close").click()
+        expect(dialog).not_to_be_visible()
+
+        no_script = browser.new_context(java_script_enabled=False)
+        fallback_page = no_script.new_page()
+        fallback_page.goto(live_server.url, wait_until="networkidle")
+        fallback_page.get_by_role("link", name="Sign in", exact=True).click()
+        expect(
+            fallback_page.get_by_role("heading", name="Sign in to Campus Cuisines")
+        ).to_be_visible()
+        assert fallback_page.url == live_server.url + "/accounts/login/"
+        no_script.close()
+        browser.close()
+
+
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
 def test_homepage_renders_in_chromium(live_server, client) -> None:
     user = User.objects.create_user(
         username="browser-student",
@@ -73,6 +125,9 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         )
         page = context.new_page()
         page.goto(live_server.url, wait_until="networkidle")
+        expect(
+            page.get_by_role("dialog", name="Sign in to Campus Cuisines")
+        ).to_have_count(0)
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")
         expect(page.get_by_role("radio")).to_have_count(5)

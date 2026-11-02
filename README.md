@@ -172,7 +172,12 @@ GOOGLE_OAUTH_ALLOWED_EMAIL_DOMAINS=csuchico.edu
 ```
 
 Use `docker compose up --build web`, open `http://127.0.0.1:8000/`, and choose
-“Continue with Google.” `localhost` and `127.0.0.1` are different OAuth origins.
+“Sign in” to open the dialog, then “Continue with Google.” Direct links,
+protected-page redirects, and browsers without JavaScript use `/accounts/login/`.
+The dialog markup and appearance live in `templates/account/_login_dialog.html`
+and `static/account/login-dialog.css`; both entry points share the Google form in
+`templates/account/_login_content.html`. `localhost` and `127.0.0.1` are
+different OAuth origins.
 Automated tests use provider fixtures and never real credentials.
 
 Normal staff access also starts through Google. A password superuser is an
