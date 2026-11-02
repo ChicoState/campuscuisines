@@ -5,7 +5,7 @@ services:
     build:
       context: .
     command: >
-      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py migrate && exec python manage.py runserver 0.0.0.0:8000"
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://campuscuisines:change-this-local-only@postgres:5432/campuscuisines}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}

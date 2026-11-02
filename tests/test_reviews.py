@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from reviews.forms import RATING_CHOICES, ReviewForm
-from reviews.models import Review
+from reviews.models import Review, Tag, TagCategory
 
 pytestmark = pytest.mark.django_db
 
@@ -16,6 +16,65 @@ def test_review_form_offers_five_whole_star_choices_with_descriptions() -> None:
         (4, "4 out of 5 stars — Good"),
         (5, "5 out of 5 stars — Amazing"),
     ]
+
+
+def test_review_form_saves_selected_tags() -> None:
+    allergen_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Allergens"
+    )
+    contains_peanuts = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=allergen_category, name="Contains peanuts"
+    )
+    meat_type_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Meat type"
+    )
+    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=meat_type_category, name="Vegetarian"
+    )
+
+    form = ReviewForm(
+        data={
+            "dish_name": "Vegetarian pad thai",
+            "reviewer_name": "Avery",
+            "rating": 5,
+            "text": "Great texture and flavor.",
+            "tags": [str(contains_peanuts.pk), str(vegetarian.pk)],
+        }
+    )
+
+    assert form.is_valid()
+    review = form.save()
+    assert list(review.tags.all()) == [contains_peanuts, vegetarian]
+
+
+def test_review_form_rejects_unknown_tags() -> None:
+    form = ReviewForm(
+        data={
+            "dish_name": "Vegetarian pad thai",
+            "reviewer_name": "Avery",
+            "rating": 5,
+            "text": "Great texture and flavor.",
+            "tags": ["999"],
+        }
+    )
+
+    assert not form.is_valid()
+    assert form.errors is not None
+    assert "tags" in form.errors
+
+
+def test_tag_names_are_unique_within_their_category() -> None:
+    category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Allergens"
+    )
+    Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=category, name="Contains peanuts"
+    )
+
+    with pytest.raises(IntegrityError):
+        Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+            category=category, name="Contains peanuts"
+        )
 
 
 @pytest.mark.parametrize("rating", range(1, 6))

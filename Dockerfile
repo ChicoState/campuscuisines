@@ -37,4 +37,4 @@ RUN DJANGO_DEBUG=false \
     python manage.py collectstatic --noinput
 EXPOSE 8080
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} config.wsgi"]
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} config.wsgi"]
