@@ -87,6 +87,9 @@ authorization boundary. Google OAuth is the only normal account creation/sign-in
 path and the server must enforce the configured eligible-email domains.
 Account administration is superuser-only; routine staff receive specific model
 permissions through an operator-controlled procedure.
+Each developer must configure real Google OAuth credentials in their untracked
+`.env` and recreate the `web` container after changing them. A missing client ID or
+secret makes the Google login start return a local 503 response.
 
 ## Change checklist
 

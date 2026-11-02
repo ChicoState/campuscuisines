@@ -136,6 +136,8 @@ deployment is not. Complete these steps in a Google Cloud project:
    `docker compose up --build web`, visit `http://127.0.0.1:8000/`, select
    **Sign in**, then **Continue with Google** in the dialog. The standalone
    `/accounts/login/` page also works for direct visits and protected redirects.
+   Every developer needs their own local `.env`; pulling the branch does not copy
+   OAuth credentials. Recreate the `web` container after changing `.env`.
 4. Manually prove: eligible first sign-in creates the account; repeat sign-in uses
    the same account; logout works; an ineligible Google account is denied and does
    not create a user; anonymous review/image POSTs redirect or reject; and a

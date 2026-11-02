@@ -42,6 +42,28 @@ def test_google_login_must_be_started_with_post(client) -> None:
     assert response.headers["Allow"] == "POST"
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("client_id", "client_secret"),
+    [("", "test-secret"), ("test-client-id", "")],
+)
+def test_google_login_without_complete_credentials_stays_local(
+    client, client_id: str, client_secret: str
+) -> None:
+    with override_settings(
+        SOCIALACCOUNT_PROVIDERS={
+            "google": {
+                "APP": {"client_id": client_id, "secret": client_secret, "key": ""}
+            }
+        }
+    ):
+        response = client.post(reverse("google_login"))
+
+    assert response.status_code == 503
+    assert "Google sign-in is not configured" in response.content.decode()
+    assert "Location" not in response.headers
+
+
 def test_local_password_and_signup_routes_are_not_exposed(client) -> None:
     assert client.get("/accounts/signup/").status_code == 404
     assert client.get("/accounts/password/reset/").status_code == 404

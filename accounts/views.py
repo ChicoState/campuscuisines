@@ -1,3 +1,5 @@
+from allauth.socialaccount.providers.google.views import oauth2_login
+from django.conf import settings
 from django.contrib.auth import logout as django_logout
 from django.contrib.auth.views import redirect_to_login
 from django.http import HttpRequest, HttpResponse, HttpResponseNotAllowed
@@ -34,6 +36,17 @@ def login(request: HttpRequest) -> HttpResponse:
             "next_url": safe_next_url(request),
         },
     )
+
+
+def google_login(request: HttpRequest) -> HttpResponse:
+    app = settings.SOCIALACCOUNT_PROVIDERS.get("google", {}).get("APP", {})
+    if not app.get("client_id") or not app.get("secret"):
+        return HttpResponse(
+            b"Google sign-in is not configured on this server. Contact the site "
+            b"administrator.",
+            status=503,
+        )
+    return oauth2_login(request)
 
 
 def logout(request: HttpRequest) -> HttpResponse:

@@ -171,6 +171,21 @@ GOOGLE_OAUTH_CLIENT_SECRET=your-local-client-secret
 GOOGLE_OAUTH_ALLOWED_EMAIL_DOMAINS=csuchico.edu
 ```
 
+Each developer must create their own `.env` after pulling the branch; Git does not
+track this file. Replace the example placeholders with a real Google OAuth Web
+application client ID and secret. After changing `.env`, recreate the web container
+with `docker compose up --build --force-recreate web` so Django receives the new
+values. If Google reports `Missing required parameter: client_id`, check that both
+values are present inside the running container without displaying them:
+
+```sh
+docker compose exec web python -c 'import os; print({key: bool(os.getenv(key)) for key in ("GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET")})'
+```
+
+Both results must be `True`. If either is `False`, check the local `.env` and any
+shell variables that may override it, then recreate `web`. Missing credentials now
+produce a local 503 response instead of sending an invalid request to Google.
+
 Use `docker compose up --build web`, open `http://127.0.0.1:8000/`, and choose
 “Sign in” to open the dialog, then “Continue with Google.” Direct links,
 protected-page redirects, and browsers without JavaScript use `/accounts/login/`.
