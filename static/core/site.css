@@ -100,7 +100,10 @@ body {
 }
 
 .reviews-section__action {
-  margin-top: var(--space-4);
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 10;
 }
 
 .section-heading h1,
@@ -224,6 +227,10 @@ h1 {
 .reviews-section__heading h2 {
   margin: 0;
   font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.reviews-preview > .empty-state {
+  margin-top: var(--space-4);
 }
 
 .review-form {

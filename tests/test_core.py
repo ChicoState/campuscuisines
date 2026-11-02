@@ -169,7 +169,9 @@ def test_review_section_headings_stack_their_label_title_and_action() -> None:
     action_rules = stylesheet.split(".reviews-section__action {", 1)[1].split("}", 1)[
         0
     ]
-    assert "margin-top: var(--space-4)" in action_rules
+    assert "position: fixed" in action_rules
+    assert "bottom: var(--space-4)" in action_rules
+    assert "right: var(--space-4)" in action_rules
 
 
 def test_home_welcome_spacing_matches_other_page_sections() -> None:
