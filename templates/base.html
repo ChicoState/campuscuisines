@@ -81,11 +81,13 @@
                   <h3>{{ announcement.title }}</h3>
                   <p class="announcement__meta">Posted by {{ announcement.author_name }}</p>
                 </div>
-                <form method="post" action="{% url 'announcement-dismiss' announcement.pk %}" class="announcement__dismiss-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <button type="submit" class="announcement__dismiss" aria-label="Dismiss {{ announcement.title }}">×</button>
-                </form>
+                {% if announcement.is_dismissable %}
+                  <form method="post" action="{% url 'announcement-dismiss' announcement.pk %}" class="announcement__dismiss-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="submit" class="announcement__dismiss" aria-label="Dismiss {{ announcement.title }}">×</button>
+                  </form>
+                {% endif %}
               </div>
               <p>{{ announcement.body|linebreaksbr }}</p>
             </article>

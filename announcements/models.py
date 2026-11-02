@@ -13,6 +13,7 @@ class Announcement(models.Model):
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)  # type: ignore[reportArgumentType]
+    is_dismissable = models.BooleanField(default=True)  # type: ignore[reportArgumentType]
 
     class Meta:
         ordering = ["-created_at", "-pk"]
@@ -42,7 +43,10 @@ class AnnouncementDismissal(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                condition=Q(user__isnull=False) | Q(session_key__isnull=False),
+                condition=(
+                    Q(user__isnull=False, session_key__isnull=True)
+                    | Q(user__isnull=True, session_key__isnull=False)
+                ),
                 name="announcement_dismissal_has_owner",
             ),
             models.UniqueConstraint(

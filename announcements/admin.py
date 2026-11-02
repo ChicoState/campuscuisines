@@ -14,3 +14,4 @@ class AnnouncementAdmin(admin.ModelAdmin):
 class AnnouncementDismissalAdmin(admin.ModelAdmin):
     list_display = ("announcement", "user", "session_key", "dismissed_at")
     list_filter = ("dismissed_at",)
+    list_select_related = ("announcement", "user")
