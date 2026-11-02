@@ -20,6 +20,7 @@ optional image per review.
 | `config/` | Django settings, routes, and WSGI/ASGI entry points |
 | `accounts/` | Initial custom Django user model and migration |
 | `core/`, `templates/`, `static/` | Public homepage, reusable image-asset workflow, templates, and browser assets |
+| `announcements/` | Database-backed announcement panel, dismissal persistence, history page, and admin registration |
 | `reviews/` | Public dish-review model, form, explicit image association, admin registration, and migrations |
 | `docs/` | Living implementation specifications, plans, and architecture decisions, including the [dish reviews MVP plan](docs/dish-reviews-plan.md) |
 
@@ -143,6 +144,15 @@ storage, visibility, and retention rationale.
 | `docker compose down --volumes --remove-orphans` | Stop services and delete local data |
 
 CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, Chromium homepage and image-workflow smoke tests, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
+
+## Announcements
+
+The shared header includes a database-backed announcement panel with a count badge.
+Users can dismiss announcements; authenticated dismissals persist per account and
+anonymous dismissals persist per browser session. The save control is currently a
+visual placeholder and does not persist state. `/announcements/history/` lists all
+active and archived announcements. Manage announcement content and active state in
+Django admin.
 
 ## Dish reviews MVP
 

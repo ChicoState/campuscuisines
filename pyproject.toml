@@ -14,7 +14,13 @@ pythonVersion = "3.13"
 venvPath = "."
 venv = ".venv"
 typeCheckingMode = "basic"
-exclude = [".agents", ".venv", "accounts/migrations", "reports"]
+exclude = [
+    ".agents",
+    ".venv",
+    "accounts/migrations",
+    "announcements/migrations",
+    "reports",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
