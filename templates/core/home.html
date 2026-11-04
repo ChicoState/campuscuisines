@@ -105,6 +105,38 @@
       <p class="eyebrow">Fresh from campus</p>
       <h2 id="review-feed-heading">Recent reviews</h2>
     </div>
+    <form method="get" class="review-filter" aria-label="Filter reviews by tag">
+      <fieldset>
+        <legend>Filter reviews by tag</legend>
+        <div class="review-filter__groups">
+          {% for group in form.tag_groups %}
+            <div class="review-filter__group">
+              <h3>{{ group.name }}</h3>
+              {% for tag in group.tags %}
+                <label for="review-tag-{{ tag.pk }}">
+                  <input
+                    id="review-tag-{{ tag.pk }}"
+                    name="review_tag"
+                    type="checkbox"
+                    value="{{ tag.pk }}"
+                    {% if tag.pk in selected_review_tag_ids %}checked{% endif %}
+                  >
+                  {{ tag.name }}
+                </label>
+              {% endfor %}
+            </div>
+          {% empty %}
+            <p class="form-help">No review tags are available yet.</p>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <div class="review-filter__actions">
+        <button type="submit">Apply filters</button>
+        {% if selected_review_tag_ids %}
+          <a href="{% url 'home' %}#review-feed-heading">Clear filters</a>
+        {% endif %}
+      </div>
+    </form>
     {% if reviews %}
       <ol class="review-list">
         {% for review in reviews %}
