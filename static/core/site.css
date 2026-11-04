@@ -43,6 +43,37 @@ body {
   text-decoration: none;
 }
 
+.site-header .page-width {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.site-nav,
+.site-nav form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.site-nav a,
+.site-nav__identity {
+  color: white;
+}
+
+.site-nav__identity {
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+}
+
+.site-nav__button {
+  padding: var(--space-2) var(--space-3);
+  background: white;
+  color: var(--color-brand);
+  font-size: 0.875rem;
+}
+
 .welcome {
   max-width: 42rem;
   padding-block: clamp(var(--space-12), 12vw, 8rem);
@@ -67,6 +98,24 @@ h1 {
   margin-block: var(--space-6) 0;
   color: var(--color-muted);
   font-size: 1.125rem;
+}
+
+.account-panel {
+  max-width: 38rem;
+  padding-block: var(--space-12);
+}
+
+.account-form {
+  margin-top: var(--space-6);
+}
+
+.account-prompt {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding: var(--space-6);
+  border: 1px solid #cbd5d0;
+  background: white;
 }
 
 .image-upload-form {

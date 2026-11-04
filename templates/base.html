@@ -6,17 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Campus Cuisines{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'core/site.css' %}">
+    {% if not user.is_authenticated %}
+      <link rel="stylesheet" href="{% static 'account/login-dialog.css' %}">
+      <script src="{% static 'account/login-dialog.js' %}" defer></script>
+    {% endif %}
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
       <div class="page-width">
         <a class="brand" href="{% url 'home' %}">Campus Cuisines</a>
+        <nav class="site-nav" aria-label="Account">
+          {% if user.is_authenticated %}
+            <span class="site-nav__identity">{{ user.email }}</span>
+            <form method="post" action="{% url 'account-logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="site-nav__button">Sign out</button>
+            </form>
+          {% else %}
+            <a href="{% url 'account-login' %}" data-account-login-trigger>Sign in</a>
+          {% endif %}
+        </nav>
       </div>
     </header>
     <main id="main-content" class="page-width">
       {% block content %}{% endblock %}
     </main>
+    {% if not user.is_authenticated %}
+      {% include "account/_login_dialog.html" %}
+    {% endif %}
     {% block scripts %}{% endblock %}
   </body>
 </html>

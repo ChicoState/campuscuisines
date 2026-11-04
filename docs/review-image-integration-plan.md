@@ -4,6 +4,11 @@
 
 Implemented on 2026-10-11.
 
+The later `docs/google-accounts-plan.md` supersedes this plan's anonymous-review
+assumptions. Published reviews and images remain publicly readable, while review
+submissions require an eligible signed-in user in every environment. Optional
+review-image attachments remain limited to explicit debug mode.
+
 ## Objective
 
 Let a reviewer optionally select one image while submitting a dish review in local

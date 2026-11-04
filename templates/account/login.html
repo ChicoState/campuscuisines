@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in | Campus Cuisines{% endblock %}
+
+{% block content %}
+  <section class="account-panel" aria-labelledby="sign-in-heading">
+    <p class="eyebrow">Campus access</p>
+    <h1 id="sign-in-heading">Sign in to Campus Cuisines</h1>
+    {% include "account/_login_content.html" %}
+  </section>
+{% endblock %}

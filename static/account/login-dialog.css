@@ -1,0 +1,54 @@
+.account-dialog {
+  width: min(30rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  border: 1px solid #cbd5d0;
+  border-radius: 0.5rem;
+  background: white;
+  color: var(--color-ink);
+  box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.2);
+}
+
+.account-dialog::backdrop {
+  background: rgb(10 27 20 / 0.65);
+}
+
+.account-dialog__content {
+  padding: var(--space-6);
+}
+
+.account-dialog__dismiss {
+  float: right;
+  margin: 0 0 var(--space-3) var(--space-3);
+}
+
+.account-dialog__dismiss button {
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  color: var(--color-brand);
+}
+
+.account-dialog__eyebrow {
+  margin: 0 0 var(--space-2);
+  color: var(--color-brand);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.account-dialog h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.account-dialog .intro {
+  margin-block: var(--space-4);
+  font-size: 1rem;
+}
+
+.account-dialog .account-form {
+  margin-block: var(--space-6) var(--space-4);
+}
