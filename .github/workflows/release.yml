@@ -59,7 +59,7 @@ jobs:
           .venv/bin/python -m pip install --require-hashes -r requirements-dev.txt
       - run: .venv/bin/ruff format --check . && .venv/bin/ruff check . && .venv/bin/pyright && .venv/bin/bandit -q -r scripts accounts config core && .venv/bin/pip-audit --local
       - run: .venv/bin/pytest --cov --cov-report=xml:reports/coverage.xml
-      - uses: google-github-actions/auth@v2
+      - uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
