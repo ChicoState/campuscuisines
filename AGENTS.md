@@ -7,12 +7,18 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 ## Repository map
 
 - `config/`: Django settings, routing, and WSGI/ASGI entry points.
-- `accounts/`: initial custom user model and migration. Do not change `AUTH_USER_MODEL` after migrations exist.
-- `core/`, `templates/`, `static/`: public landing page, modular navigation pages, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
+- `accounts/`: custom user model, Google identity eligibility, access guards,
+  sign-in/logout views, admin entry, and migrations. Do not change
+  `AUTH_USER_MODEL` after migrations exist.
+- `core/`, `templates/`, `static/`: public homepage, shared navigation pages,
+  reusable image assets, templates, and browser assets. `ImageAsset` is independent
+  of product models.
+- `templates/account/`, `static/account/`: reusable Google sign-in content and dialog assets; preserve the standalone sign-in page for protected redirects and no-JavaScript access.
 - `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
 - `reviews/`: public dish-review model, form, explicit review-image association, admin registration, and migrations.
 - `docs/`: living specifications and approved implementation plans, including
-  `dish-reviews-plan.md`, `image-upload-plan.md`, and storage-lifecycle decisions.
+  `dish-reviews-plan.md`, `image-upload-plan.md`, `google-accounts-plan.md`,
+  `navigation-pages-plan.md`, and storage-lifecycle decisions.
 - Restaurants, menu items, publishing endpoints, and other product models: not created yet. The public `/images/` page is a read-only gallery of already-published image assets.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
 - `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local Django/PostgreSQL/MinIO services and production-image configuration.
@@ -67,10 +73,25 @@ never restore a debug-enabled fallback.
   `OBJECT_STORAGE_PUBLIC_ENDPOINT` for browser-consumed signed URLs. In local
   Compose these are `http://minio:9000` and `http://localhost:9000`; do not use the
   internal Docker hostname in a browser-facing URL.
-- Reviews may attach one image only in explicit local debug mode through the
+- Eligible authenticated reviews may attach one image only in explicit local debug mode through the
   `ReviewImage` association. It publishes with the review and renders through a signed
   URL. Future multi-image support must extend this explicit relationship; do not add a
   generic foreign key or standalone gallery.
+
+## Feature access levels
+
+`docs/google-accounts-plan.md` is the approved account and Google OAuth plan.
+Every new user-facing feature must state and test one access level in its
+specification: `public` (explicit read-only anonymous access), `authenticated`
+(eligible signed-in user), or `staff/admin` (eligible staff user). Treat an
+unclassified feature as `authenticated`; client-side visibility is never an
+authorization boundary. Google OAuth is the only normal account creation/sign-in
+path and the server must enforce the configured eligible-email domains.
+Account administration is superuser-only; routine staff receive specific model
+permissions through an operator-controlled procedure.
+Each developer must configure real Google OAuth credentials in their untracked
+`.env` and recreate the `web` container after changing them. A missing client ID or
+secret makes the Google login start return a local 503 response.
 
 ## Change checklist
 

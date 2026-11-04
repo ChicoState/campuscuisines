@@ -15,6 +15,11 @@ the approved `docs/review-image-integration-plan.md`: a debug-only review submis
 may create one explicit `ReviewImage` association and publish its asset. No standalone
 gallery, generic relation, or production scheduler has been added.
 
+The later `docs/google-accounts-plan.md` supersedes this plan's temporary
+anonymous debug-upload allowance. `/images/upload/` requires an eligible signed-in
+user in every environment. A review may attach one image only when debug mode is
+explicitly enabled, and its author must still be eligible and signed in.
+
 ## Reviewed outcome
 
 Campus Cuisines needs a reusable image asset capability: an authorized user uploads

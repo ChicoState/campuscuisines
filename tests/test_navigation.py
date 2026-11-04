@@ -3,6 +3,7 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import User
 from core.models import ImageAsset
 from reviews.models import Review, Tag, TagCategory
 
@@ -149,11 +150,18 @@ def test_legacy_home_review_submission_redirects_to_reviews(client) -> None:
     )
 
     assert response.status_code == 302
-    assert response.url == reverse("reviews")
+    assert response.url.startswith(reverse("account-login"))
 
 
 @pytest.mark.django_db
 def test_reviews_page_offers_grouped_tags_and_saves_selected_tags(client) -> None:
+    client.force_login(
+        User.objects.create_user(
+            username="navigation-student",
+            email="navigation-student@csuchico.edu",
+            password="unused",
+        )
+    )
     category = TagCategory.objects.create(name="Dietary")
     vegetarian = Tag.objects.create(category=category, name="Vegetarian")
 
@@ -183,6 +191,13 @@ def test_reviews_page_offers_grouped_tags_and_saves_selected_tags(client) -> Non
 
 @pytest.mark.django_db
 def test_invalid_review_preserves_selected_tags_and_opens_dropdown(client) -> None:
+    client.force_login(
+        User.objects.create_user(
+            username="navigation-invalid-student",
+            email="navigation-invalid-student@csuchico.edu",
+            password="unused",
+        )
+    )
     category = TagCategory.objects.create(name="Dietary")
     vegetarian = Tag.objects.create(category=category, name="Vegetarian")
 

@@ -31,9 +31,77 @@ ONE_PIXEL_PNG = base64.b64decode(
     os.getenv("RUN_BROWSER_TESTS") != "true",
     reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
 )
-def test_homepage_renders_in_chromium(live_server) -> None:
-    category = TagCategory.objects.create(name="Dietary")
-    vegetarian = Tag.objects.create(category=category, name="Vegetarian")
+def test_sign_in_opens_a_dialog_and_preserves_the_page(live_server) -> None:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page()
+        page.goto(live_server.url, wait_until="networkidle")
+
+        sign_in = page.get_by_role("link", name="Sign in", exact=True)
+        sign_in.click()
+
+        dialog = page.get_by_role("dialog", name="Sign in to Campus Cuisines")
+        expect(dialog).to_be_visible()
+        expect(
+            dialog.get_by_role("button", name="Continue with Google")
+        ).to_be_visible()
+        expect(
+            dialog.locator('form[action="/accounts/google/login/"]')
+        ).to_have_attribute("method", "post")
+        expect(dialog.locator('input[name="next"]')).to_have_value("/")
+        expect(dialog.locator('input[name="csrfmiddlewaretoken"]')).to_have_count(1)
+        assert page.url == live_server.url + "/"
+
+        page.keyboard.press("Escape")
+        expect(dialog).not_to_be_visible()
+        expect(sign_in).to_be_focused()
+
+        page.get_by_role("link", name="Continue to sign in").click()
+        expect(dialog).to_be_visible()
+        page.set_viewport_size({"width": 320, "height": 720})
+        assert dialog.evaluate(
+            "element => element.getBoundingClientRect().right <= window.innerWidth"
+        )
+        dialog.get_by_role("button", name="Close").click()
+        expect(dialog).not_to_be_visible()
+
+        no_script = browser.new_context(java_script_enabled=False)
+        fallback_page = no_script.new_page()
+        fallback_page.goto(live_server.url, wait_until="networkidle")
+        fallback_page.get_by_role("link", name="Sign in", exact=True).click()
+        expect(
+            fallback_page.get_by_role("heading", name="Sign in to Campus Cuisines")
+        ).to_be_visible()
+        assert fallback_page.url == live_server.url + "/accounts/login/"
+        no_script.close()
+        browser.close()
+
+
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
+def test_homepage_renders_in_chromium(live_server, client) -> None:
+    user = User.objects.create_user(
+        username="browser-student",
+        email="browser-student@csuchico.edu",
+        password="unused",
+    )
+    client.force_login(user)
+    meat_type_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Meat type"
+    )
+    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=meat_type_category, name="Vegetarian"
+    )
+    dietary_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        name="Dietary"
+    )
+    spicy = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
+        category=dietary_category, name="Spicy"
+    )
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -54,6 +122,30 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         page.get_by_role("button", name="Make a review").click()
 
         expect(page.get_by_text("No reviews yet")).to_be_visible()
+
+        expect(page.get_by_role("link", name="Sign in", exact=True)).to_be_visible()
+        page.get_by_role("link", name="Sign in", exact=True).click()
+        expect(
+            page.get_by_role("heading", name="Sign in to Campus Cuisines")
+        ).to_be_visible()
+
+        context = browser.new_context()
+        context.add_cookies(
+            [
+                {
+                    "name": "sessionid",
+                    "value": client.cookies["sessionid"].value,
+                    "url": live_server.url,
+                }
+            ]
+        )
+        page = context.new_page()
+        page.goto(live_server.url, wait_until="networkidle")
+        expect(
+            page.get_by_role("dialog", name="Sign in to Campus Cuisines")
+        ).to_have_count(0)
+        page.get_by_role("link", name="Reviews").click()
+        page.get_by_role("button", name="Make a review").click()
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")
         expect(page.get_by_role("radio")).to_have_count(5)
@@ -70,10 +162,18 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         )
         expect(page.locator(".rating-picker__star--filled")).to_have_count(4)
         page.get_by_label("Your review").fill("Warm, savory, and excellent.")
-        page.locator(".tag-dropdown summary").click()
+        tag_dropdown = page.locator(".tag-dropdown")
+        tag_dropdown.locator("summary").click()
         vegetarian_tag = page.get_by_label("Vegetarian")
+        spicy_tag = page.get_by_label("Spicy")
         vegetarian_tag.check()
-        expect(page.locator("[data-tags-summary]")).to_have_text("1 tag selected")
+        spicy_tag.check()
+        expect(page.locator("[data-tags-summary]")).to_have_text("2 tags selected")
+        tag_dropdown.locator("summary").click()
+        expect(tag_dropdown).not_to_have_attribute("open", "")
+        tag_dropdown.locator("summary").click()
+        expect(vegetarian_tag).to_be_checked()
+        expect(spicy_tag).to_be_checked()
         page.get_by_role("button", name="Publish review").click()
         expect(page.get_by_role("heading", name="Mushroom ramen")).to_be_visible()
         expect(page.locator(".review__rating")).to_contain_text("4 out of 5 stars")
@@ -81,10 +181,11 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         expect(page.locator(".review time")).to_be_visible()
         expect(page.locator("link[href*='core/site.css']")).to_have_count(1)
         assert not console_errors
+        context.close()
         browser.close()
 
-    review = Review.objects.get()
-    assert list(review.tags.all()) == [vegetarian]
+    review = Review.objects.get()  # type: ignore[reportAttributeAccessIssue]
+    assert list(review.tags.all()) == [spicy, vegetarian]
 
 
 @pytest.mark.browser
@@ -95,8 +196,14 @@ def test_homepage_renders_in_chromium(live_server) -> None:
 )
 @override_settings(DEBUG=True, STORAGES=TEST_STORAGES)
 def test_review_form_uploads_and_renders_an_image_in_chromium(
-    live_server, monkeypatch: pytest.MonkeyPatch
+    live_server, client, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    user = User.objects.create_user(
+        username="browser-image-student",
+        email="browser-image-student@csuchico.edu",
+        password="unused",
+    )
+    client.force_login(user)
     monkeypatch.setattr(
         "core.views.signed_image_url",
         lambda _asset, _viewer: (
@@ -107,6 +214,15 @@ def test_review_form_uploads_and_renders_an_image_in_chromium(
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page(viewport={"width": 320, "height": 720})
+        page.context.add_cookies(
+            [
+                {
+                    "name": "sessionid",
+                    "value": client.cookies["sessionid"].value,
+                    "url": live_server.url,
+                }
+            ]
+        )
         console_errors: list[str] = []
         page.on(
             "console",
@@ -148,7 +264,7 @@ def test_review_form_uploads_and_renders_an_image_in_chromium(
     reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
 )
 @override_settings(DEBUG=True)
-def test_image_upload_form_renders_in_chromium(live_server) -> None:
+def test_image_upload_requires_sign_in_in_chromium(live_server) -> None:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page()
@@ -162,10 +278,9 @@ def test_image_upload_form_renders_in_chromium(live_server) -> None:
 
         page.goto(f"{live_server.url}/images/upload/", wait_until="networkidle")
 
-        expect(page.get_by_role("heading", name="Upload an image")).to_be_visible()
-        expect(page.get_by_label("File")).to_be_visible()
-        expect(page.get_by_label("Alt text")).to_be_visible()
-        expect(page.get_by_role("button", name="Upload image")).to_be_visible()
+        expect(
+            page.get_by_role("heading", name="Sign in to Campus Cuisines")
+        ).to_be_visible()
         assert not console_errors
         browser.close()
 
@@ -180,7 +295,9 @@ def test_owner_can_render_an_unpublished_image_in_chromium(
     live_server, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = ImageAsset.objects.create(
         file="images/campus-meal.png",

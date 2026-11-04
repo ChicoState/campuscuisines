@@ -35,7 +35,10 @@ class ReviewForm(forms.ModelForm):
         tags = Tag.objects.select_related("category")
         self.fields["tags"].queryset = tags
         self.tag_groups = [
-            {"name": category_name, "tags": list(category_tags)}
+            {
+                "name": category_name,
+                "tags": list(category_tags),
+            }
             for category_name, category_tags in groupby(
                 tags, key=lambda tag: tag.category.name
             )

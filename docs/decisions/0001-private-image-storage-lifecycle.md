@@ -4,6 +4,10 @@
 
 Accepted
 
+The anonymous debug-upload allowance below was superseded by
+[ADR-0002](0002-google-only-campus-accounts.md). All uploads now require an
+eligible signed-in campus user, including in debug mode.
+
 ## Date
 
 2026-10-01
