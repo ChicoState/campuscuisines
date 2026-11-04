@@ -3,7 +3,8 @@
 
   dropdowns.forEach((dropdown) => {
     const summary = dropdown.querySelector("[data-tags-summary]");
-    const checkboxes = dropdown.querySelectorAll('input[name="tags"]');
+    const inputName = dropdown.dataset.tagsInputName || "tags";
+    const checkboxes = dropdown.querySelectorAll(`input[name="${inputName}"]`);
 
     if (!summary) return;
 

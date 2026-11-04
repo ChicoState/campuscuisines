@@ -6,9 +6,14 @@ from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from catalog.models import MenuItem
 from core.forms import ImageAssetUploadForm
 from core.models import ImageAsset
 from core.services.images import signed_image_url
+from reviews.filters import (
+    filter_reviews_by_selected_tag_ids,
+    get_selected_tag_ids,
+)
 from reviews.forms import ReviewForm
 from reviews.models import Review, ReviewImage
 
@@ -45,8 +50,11 @@ def home(request):
         ),
         to_attr="published_images",
     )
+    selected_review_tag_ids = get_selected_tag_ids(request.GET.getlist("review_tag"))
     reviews = list(
-        Review.objects.prefetch_related(review_images)  # type: ignore[reportAttributeAccessIssue]
+        filter_reviews_by_selected_tag_ids(
+            Review.objects.prefetch_related(review_images), selected_review_tag_ids
+        )  # type: ignore[reportAttributeAccessIssue]
     )
     for review in reviews:
         for review_image in review.published_images:
@@ -58,7 +66,9 @@ def home(request):
         {
             "form": form,
             "allow_image_upload": settings.DEBUG,
+            "menu_items": MenuItem.objects.order_by("name", "id"),
             "reviews": reviews,
+            "selected_review_tag_ids": selected_review_tag_ids,
         },
     )
 
