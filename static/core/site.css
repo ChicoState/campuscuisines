@@ -325,53 +325,20 @@ button {
 
 .review-filter {
   display: grid;
-  gap: var(--space-4);
-  margin-top: var(--space-6);
-  padding: var(--space-4);
-  border: 1px solid #cbd5d0;
-  background: #f5f8f6;
-}
-
-.review-filter fieldset {
-  display: grid;
   gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  border: 0;
+  margin-top: var(--space-6);
 }
 
-.review-filter legend {
-  font-weight: 700;
+.review-filter__dropdown {
+  width: 100%;
+  max-width: 32rem;
 }
 
-.review-filter__groups {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-}
-
-.review-filter__group {
-  display: grid;
-  gap: var(--space-2);
-  min-width: 9rem;
-}
-
-.review-filter__group h3 {
-  margin: 0;
-  color: var(--color-brand);
-  font-size: 1rem;
-}
-
-.review-filter__group label {
+.review-filter__dropdown .tag-dropdown__summary {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-}
-
-.review-filter__group input {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--color-brand);
+  justify-content: space-between;
+  gap: var(--space-4);
 }
 
 .review-filter__actions {

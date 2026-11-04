@@ -28,6 +28,8 @@ def test_home_filters_reviews_by_selected_tag(client) -> None:
     content = response.content.decode()
     assert "Veggie bowl" in content
     assert "Chicken bowl" not in content
+    assert 'class="tag-dropdown review-filter__dropdown"' in content
+    assert "Filter reviews by tag" in content
     selected_tag_html = content.split(f'id="review-tag-{vegetarian.pk}"', 1)[1]
     assert f'value="{vegetarian.pk}"' in selected_tag_html[:220]
     assert "checked" in selected_tag_html[:220]

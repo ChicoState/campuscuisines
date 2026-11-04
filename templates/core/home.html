@@ -106,14 +106,22 @@
       <h2 id="review-feed-heading">Recent reviews</h2>
     </div>
     <form method="get" class="review-filter" aria-label="Filter reviews by tag">
-      <fieldset>
-        <legend>Filter reviews by tag</legend>
-        <div class="review-filter__groups">
+      <details
+        class="tag-dropdown review-filter__dropdown"
+        data-tags-input-name="review_tag"
+      >
+        <summary class="tag-dropdown__summary">
+          <span>Filter reviews by tag</span>
+          <span data-tags-summary>
+            {{ selected_review_tag_ids|length }} tag{{ selected_review_tag_ids|length|pluralize }} selected
+          </span>
+        </summary>
+        <div class="tag-dropdown__options">
           {% for group in form.tag_groups %}
-            <div class="review-filter__group">
-              <h3>{{ group.name }}</h3>
+            <section class="tag-dropdown__group" aria-labelledby="review-tag-category-{{ forloop.counter }}">
+              <h3 class="tag-dropdown__category" id="review-tag-category-{{ forloop.counter }}">{{ group.name }}</h3>
               {% for tag in group.tags %}
-                <label for="review-tag-{{ tag.pk }}">
+                <label class="tag-dropdown__option" for="review-tag-{{ tag.pk }}">
                   <input
                     id="review-tag-{{ tag.pk }}"
                     name="review_tag"
@@ -121,15 +129,15 @@
                     value="{{ tag.pk }}"
                     {% if tag.pk in selected_review_tag_ids %}checked{% endif %}
                   >
-                  {{ tag.name }}
+                  <span>{{ tag.name }}</span>
                 </label>
               {% endfor %}
-            </div>
+            </section>
           {% empty %}
             <p class="form-help">No review tags are available yet.</p>
           {% endfor %}
         </div>
-      </fieldset>
+      </details>
       <div class="review-filter__actions">
         <button type="submit">Apply filters</button>
         {% if selected_review_tag_ids %}
