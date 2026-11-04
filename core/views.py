@@ -6,6 +6,7 @@ from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from catalog.models import MenuItem
 from core.forms import ImageAssetUploadForm
 from core.models import ImageAsset
 from core.services.images import signed_image_url
@@ -65,6 +66,7 @@ def home(request):
         {
             "form": form,
             "allow_image_upload": settings.DEBUG,
+            "menu_items": MenuItem.objects.order_by("name", "id"),
             "reviews": reviews,
             "selected_review_tag_ids": selected_review_tag_ids,
         },

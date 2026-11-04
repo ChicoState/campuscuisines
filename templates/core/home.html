@@ -22,6 +22,12 @@
       <div class="form-field">
         <label for="{{ form.dish_name.id_for_label }}">{{ form.dish_name.label }}</label>
         {{ form.dish_name }}
+        <datalist id="menu-item-suggestions">
+          {% for menu_item in menu_items %}
+            <option value="{{ menu_item.name }}"></option>
+          {% endfor %}
+        </datalist>
+        <p id="dish-name-help" class="form-help">Start typing to see menu items, or enter a new dish name.</p>
         {{ form.dish_name.errors }}
       </div>
       <div class="form-field">
@@ -173,7 +179,7 @@
         {% endfor %}
       </ol>
     {% else %}
-      <p class="empty-state">No reviews yet. Be the first to share a campus favorite.</p>
+      <p class="empty-state" role="status" aria-live="polite">No reviews yet. Be the first to share a campus favorite.</p>
     {% endif %}
   </section>
 {% endblock %}

@@ -11,6 +11,7 @@ from django.utils.crypto import get_random_string
 from playwright.sync_api import expect, sync_playwright
 
 from accounts.models import User
+from catalog.models import MenuItem
 from core.models import ImageAsset
 from reviews.models import Review, Tag, TagCategory
 
@@ -44,6 +45,7 @@ def test_homepage_renders_in_chromium(live_server) -> None:
     spicy = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
         category=dietary_category, name="Spicy"
     )
+    menu_item = MenuItem.objects.create(name="Mushroom ramen")
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -61,8 +63,9 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         expect(
             page.get_by_role("heading", name="Welcome to Campus Cuisines")
         ).to_be_visible()
-        expect(page.get_by_text("No reviews yet")).to_be_visible()
+        expect(page.locator(".empty-state")).to_contain_text("No reviews yet")
         page.get_by_label("Dish name").fill("Mushroom ramen")
+        expect(page.locator("#menu-item-suggestions option")).to_have_count(1)
         page.get_by_label("Your name").fill("Avery")
         expect(page.get_by_role("radio")).to_have_count(5)
         stars = page.locator(".rating-picker__star")
@@ -93,6 +96,11 @@ def test_homepage_renders_in_chromium(live_server) -> None:
         expect(vegetarian_tag).to_be_checked()
         expect(spicy_tag).to_be_checked()
         review_filter = page.locator(".review-filter__dropdown")
+        filter_box = review_filter.bounding_box()
+        filter_actions_box = page.locator(".review-filter__actions").bounding_box()
+        assert filter_box is not None
+        assert filter_actions_box is not None
+        assert filter_actions_box["y"] < filter_box["y"] + filter_box["height"]
         expect(review_filter.locator("summary")).to_contain_text("0 tags selected")
         review_filter.locator("summary").click()
         expect(review_filter.get_by_label("Vegetarian")).to_be_visible()
@@ -108,6 +116,7 @@ def test_homepage_renders_in_chromium(live_server) -> None:
 
     review = Review.objects.get()  # type: ignore[reportAttributeAccessIssue]
     assert list(review.tags.all()) == [spicy, vegetarian]
+    assert review.menu_item == menu_item
 
 
 @pytest.mark.browser

@@ -324,14 +324,17 @@ button {
 }
 
 .review-filter {
-  display: grid;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
   gap: var(--space-3);
   margin-top: var(--space-6);
 }
 
 .review-filter__dropdown {
-  width: 100%;
-  max-width: 32rem;
+  flex: 1 1 24rem;
+  width: auto;
+  max-width: none;
 }
 
 .review-filter__dropdown .tag-dropdown__summary {
@@ -346,6 +349,11 @@ button {
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-4);
+}
+
+.review-filter + .review-list,
+.review-filter + .empty-state {
+  margin-top: var(--space-6);
 }
 
 .review-list {
@@ -431,6 +439,10 @@ button {
 }
 
 @media (max-width: 34rem) {
+  .review-filter__actions {
+    width: 100%;
+  }
+
   .review__heading {
     display: grid;
   }

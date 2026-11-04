@@ -1,11 +1,11 @@
-from itertools import groupby
-
 from django import forms
 from django.core.exceptions import ValidationError
 
+from catalog.filters import get_tag_groups
+from catalog.models import MenuItem, Tag
 from core.validators import validate_raster_image
 
-from .models import Review, Tag
+from .models import Review
 
 RATING_CHOICES = [
     (1, "1 out of 5 stars — Bad"),
@@ -32,17 +32,10 @@ class ReviewForm(forms.ModelForm):
     def __init__(self, *args, allow_image_upload: bool = False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.allow_image_upload = allow_image_upload
+        self.matched_menu_item: MenuItem | None = None
         tags = Tag.objects.select_related("category")
         self.fields["tags"].queryset = tags
-        self.tag_groups = [
-            {
-                "name": category_name,
-                "tags": list(category_tags),
-            }
-            for category_name, category_tags in groupby(
-                tags, key=lambda tag: tag.category.name
-            )
-        ]
+        self.tag_groups = get_tag_groups()
         selected_tags = self["tags"].value() or []
         selected_tag_ids = {str(tag_id) for tag_id in selected_tags}
         self.selected_tag_ids = {
@@ -51,6 +44,19 @@ class ReviewForm(forms.ModelForm):
             for tag in group["tags"]
             if str(tag.pk) in selected_tag_ids
         }
+
+    def clean_dish_name(self):
+        dish_name = self.cleaned_data["dish_name"]
+        self.matched_menu_item = MenuItem.objects.filter(name__iexact=dish_name).first()
+        return dish_name
+
+    def save(self, commit: bool = True):
+        review = super().save(commit=False)
+        review.menu_item = self.matched_menu_item
+        if commit:
+            review.save()
+            self.save_m2m()
+        return review
 
     def clean_image(self):
         image = self.cleaned_data.get("image")
@@ -67,7 +73,13 @@ class ReviewForm(forms.ModelForm):
         model = Review
         fields = ["dish_name", "reviewer_name", "rating", "text", "tags"]
         widgets = {
-            "dish_name": forms.TextInput(attrs={"autocomplete": "off"}),
+            "dish_name": forms.TextInput(
+                attrs={
+                    "autocomplete": "off",
+                    "aria-describedby": "dish-name-help",
+                    "list": "menu-item-suggestions",
+                }
+            ),
             "reviewer_name": forms.TextInput(attrs={"autocomplete": "name"}),
             "rating": forms.RadioSelect(choices=RATING_CHOICES),
             "text": forms.Textarea(attrs={"rows": 5}),

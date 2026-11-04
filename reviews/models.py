@@ -3,44 +3,22 @@ from typing import cast
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from catalog.models import Tag, TagCategory
 from core.models import ImageAsset
 
-
-class TagCategory(models.Model):
-    objects: models.Manager
-
-    name = models.CharField(max_length=50, unique=True)
-
-    class Meta:
-        ordering = ["name"]
-
-    def __str__(self) -> str:
-        return cast(str, self.name)
-
-
-class Tag(models.Model):
-    objects: models.Manager
-
-    category = models.ForeignKey(
-        TagCategory, on_delete=models.CASCADE, related_name="tags"
-    )
-    name = models.CharField(max_length=50)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["category", "name"], name="unique_tag_name_per_category"
-            )
-        ]
-        ordering = ["category__name", "name"]
-
-    def __str__(self) -> str:
-        return f"{self.category}: {cast(str, self.name)}"
+__all__ = ["Review", "ReviewImage", "Tag", "TagCategory"]
 
 
 class Review(models.Model):
     objects: models.Manager
 
+    menu_item = models.ForeignKey(
+        "catalog.MenuItem",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="reviews",
+    )
     dish_name = models.CharField(max_length=100)
     reviewer_name = models.CharField(max_length=50)
     rating = models.PositiveSmallIntegerField(
