@@ -19,7 +19,7 @@ def test_primary_navigation_has_four_tabs_and_no_images_or_account_tab(client) -
     labels = [
         "Home",
         "Reviews",
-        "Map/Locations",
+        "Menu",
         "About Us",
     ]
     assert [navigation.index(label) for label in labels] == sorted(
@@ -56,7 +56,7 @@ def test_navigation_pages_render(client, url_name: str) -> None:
     [
         ("home", "Home"),
         ("reviews", "Reviews"),
-        ("map", "Map/Locations"),
+        ("map", "Menu"),
         ("about", "About Us"),
     ],
 )
@@ -130,10 +130,10 @@ def test_images_page_omits_deleted_images_and_shows_empty_state(client) -> None:
 
 
 @pytest.mark.django_db
-def test_map_page_is_an_explicit_placeholder(client) -> None:
+def test_menu_page_is_an_explicit_placeholder(client) -> None:
     response = client.get(reverse("map"))
 
-    assert "The campus food map is coming soon." in response.content.decode()
+    assert "The campus menu is coming soon." in response.content.decode()
 
 
 @pytest.mark.django_db

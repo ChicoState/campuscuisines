@@ -13,7 +13,7 @@
     <dialog id="review-dialog" class="review-dialog" aria-labelledby="review-form-heading"{% if form.errors %} data-open-on-load{% endif %}>
       <div class="review-dialog__header">
         <h2 id="review-form-heading">Review a dish</h2>
-        <button type="button" class="review-dialog__close" data-review-dialog-close aria-label="Close review form">×</button>
+        <button type="button" class="dialog-close" data-review-dialog-close aria-label="Close review form">×</button>
       </div>
       <form method="post" enctype="multipart/form-data" class="review-form">
         {% csrf_token %}

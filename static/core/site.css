@@ -295,6 +295,7 @@ h1 {
   width: min(100% - var(--space-8), 46rem);
   max-height: calc(100vh - var(--space-8));
   border: 0;
+  border-radius: 0.5rem;
   padding: var(--space-6);
 }
 
@@ -313,7 +314,7 @@ h1 {
   margin: 0;
 }
 
-.review-dialog__close {
+.dialog-close {
   padding: var(--space-2) var(--space-3);
   font-size: 1.5rem;
   line-height: 1;

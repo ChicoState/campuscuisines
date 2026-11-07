@@ -52,6 +52,12 @@ def test_sign_in_opens_a_dialog_and_preserves_the_page(live_server) -> None:
         expect(dialog.locator('input[name="csrfmiddlewaretoken"]')).to_have_count(1)
         assert page.url == live_server.url + "/"
 
+        page.mouse.click(1, 1)
+        expect(dialog).not_to_be_visible()
+        expect(sign_in).to_be_focused()
+
+        sign_in.click()
+        expect(dialog).to_be_visible()
         page.keyboard.press("Escape")
         expect(dialog).not_to_be_visible()
         expect(sign_in).to_be_focused()
@@ -62,7 +68,7 @@ def test_sign_in_opens_a_dialog_and_preserves_the_page(live_server) -> None:
         assert dialog.evaluate(
             "element => element.getBoundingClientRect().right <= window.innerWidth"
         )
-        dialog.get_by_role("button", name="Close").click()
+        dialog.get_by_role("button", name="Close sign-in dialog").click()
         expect(dialog).not_to_be_visible()
 
         no_script = browser.new_context(java_script_enabled=False)
@@ -120,6 +126,14 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         ).to_be_visible()
         page.get_by_role("link", name="Reviews").click()
         page.get_by_role("button", name="Make a review").click()
+
+        review_dialog = page.get_by_role("dialog", name="Review a dish")
+        expect(review_dialog).to_be_visible()
+        page.mouse.click(1, 1)
+        expect(review_dialog).not_to_be_visible()
+
+        page.get_by_role("button", name="Make a review").click()
+        expect(review_dialog).to_be_visible()
 
         expect(page.get_by_text("No reviews yet")).to_be_visible()
 

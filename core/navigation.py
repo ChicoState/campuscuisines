@@ -12,7 +12,7 @@ NAVIGATION_ITEMS = (
         "active_url_names": ("reviews",),
     },
     {
-        "label": "Map/Locations",
+        "label": "Menu",
         "url_name": "map",
         "active_url_names": ("map",),
     },

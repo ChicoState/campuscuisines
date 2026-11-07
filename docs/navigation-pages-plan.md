@@ -7,11 +7,10 @@ navigation:
 
 1. Home
 2. Reviews
-3. Map/Locations
+3. Menu
 4. About Us
 
-The Map/Locations tab will include a dining hall map, campus locations,
-schedules, and pricing.
+The Menu tab will include campus dining menus, schedules, and pricing.
 
 Each tab should be independently extendable. Adding a new tab or adding
 features to one tab should require minimal changes to unrelated tabs.
@@ -43,7 +42,7 @@ features to one tab should require minimal changes to unrelated tabs.
   - `/` → Home
   - `/reviews/` → Reviews
   - `/images/` → Images gallery
-  - `/map/` → Map/Locations placeholder
+  - `/map/` → Menu placeholder
   - `/about/` → About Us
   - `/account/` → Account placeholder
 - Move the full review form/feed to `/reviews/`.
@@ -51,7 +50,7 @@ features to one tab should require minimal changes to unrelated tabs.
   to `/reviews/`.
 - Add an Images gallery for published, non-deleted assets while preserving
   existing upload/detail routes.
-- Add a Map/Locations page with a placeholder message and no external map
+- Add a Menu page with a placeholder message and no menu integration
   integration yet.
 - Add static About Us and Account pages.
 - Keep Home as a landing page with welcome content and a concise Reviews
@@ -71,7 +70,7 @@ features to one tab should require minimal changes to unrelated tabs.
     templates.
 
 - [x] Add named routes and isolated page implementations for Reviews, Images,
-  Map/Locations, About Us, and Account.
+  Menu, About Us, and Account.
   - Verify each route returns the correct page and status code.
 
 - [x] Extract review behavior into the Reviews page while preserving legacy Home
@@ -83,12 +82,12 @@ features to one tab should require minimal changes to unrelated tabs.
   - Verify published, unpublished, deleted, and empty-gallery behavior.
   - Verify image routes remain directly available without adding an Images tab.
 
-- [x] Add the Map/Locations placeholder page.
-  - Verify it renders the Map/Locations heading and placeholder message without external
+- [x] Add the Menu placeholder page.
+  - Verify it renders the Menu heading and placeholder message without external
     integration.
 
 - [x] Add shared responsive navigation styling.
-  - Verify the order is Home, Reviews, Map/Locations, About Us.
+  - Verify the order is Home, Reviews, Menu, About Us.
   - Verify keyboard focus, skip-link behavior, active state, mobile layout, and
     screen-reader semantics.
 
@@ -111,8 +110,7 @@ features to one tab should require minimal changes to unrelated tabs.
 - The navigation metadata is the extension point for future tabs.
 - No database models, migrations, dependencies, authentication flows, map
   integrations, or external APIs are required.
-- Map/Locations content will cover dining hall maps, campus locations,
-  schedules, and pricing.
+- Menu content will cover campus dining menus, schedules, and pricing.
 - Existing image privacy, publication, and signed-URL rules remain unchanged.
 
 ## Test scenarios
@@ -125,7 +123,7 @@ features to one tab should require minimal changes to unrelated tabs.
 - Navigation remains usable at 320px and desktop widths.
 - A new navigation definition can be added without modifying unrelated page
   templates.
-- Map/Locations and Account render their placeholder content.
+- Menu and Account render their placeholder content.
 - Home renders the welcome content and Reviews preview without a visit-planning
   section or Recent Images preview.
 - Reviews, Images, About Us, image upload, and image detail regression tests
@@ -137,5 +135,5 @@ features to one tab should require minimal changes to unrelated tabs.
 
 - The navigation is server-rendered and does not require JavaScript.
 - Each tab is a separate page rather than an in-page section.
-- Map/Locations is intentionally empty except for a user-facing placeholder.
+- Menu is intentionally empty except for a user-facing placeholder.
 - Account is intentionally empty except for a user-facing placeholder.
