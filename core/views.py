@@ -21,7 +21,7 @@ def home(request):
         return redirect_to_eligible_login(request)
 
     if request.method == "POST":
-        return _handle_review_submission(request, template_name="core/home.html")
+        return _handle_review_submission(request)
 
     reviews = _reviews_with_images()[:3]
     form = (
