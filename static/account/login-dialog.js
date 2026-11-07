@@ -1,9 +1,9 @@
 const loginDialog = document.getElementById("account-login-dialog");
 
 if (loginDialog && typeof loginDialog.showModal === "function") {
-  const loginForm = loginDialog.querySelector("[data-login-action]");
+  const loginForm = loginDialog.querySelector("[data-login-url]");
   if (loginForm instanceof HTMLFormElement) {
-    loginForm.action = loginForm.dataset.loginAction;
+    loginForm.action = loginForm.dataset.loginUrl;
   }
 
   for (const trigger of document.querySelectorAll("[data-account-login-trigger]")) {

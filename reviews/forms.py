@@ -43,9 +43,15 @@ class ReviewForm(forms.ModelForm):
                 tags, key=lambda tag: tag.category.name
             )
         ]
-        selected_tags = (
-            self.data.getlist("tags") if self.is_bound else self["tags"].value()
-        ) or []
+        if self.is_bound:
+            selected_tags = (
+                self.data.getlist("tags")
+                if hasattr(self.data, "getlist")
+                else self.data.get("tags", [])
+            )
+        else:
+            selected_tags = self["tags"].value()
+        selected_tags = selected_tags or []
         selected_tag_ids = {str(tag_id) for tag_id in selected_tags}
         self.selected_tag_ids = {
             str(tag.pk)

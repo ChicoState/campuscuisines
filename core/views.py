@@ -21,7 +21,7 @@ def home(request):
         return redirect_to_eligible_login(request)
 
     if request.method == "POST":
-        return _handle_review_submission(request)
+        return _handle_review_submission(request, template_name="core/home.html")
 
     reviews = _reviews_with_images()[:3]
     form = (
@@ -81,7 +81,7 @@ def account(request):
     return render(request, "core/account.html")
 
 
-def _handle_review_submission(request):
+def _handle_review_submission(request, template_name="core/reviews.html"):
     form = ReviewForm(request.POST, request.FILES, allow_image_upload=settings.DEBUG)
     if form.is_valid():
         with transaction.atomic():  # type: ignore[reportGeneralTypeIssues]
@@ -102,7 +102,7 @@ def _handle_review_submission(request):
 
     return render(
         request,
-        "core/reviews.html",
+        template_name,
         {
             "form": form,
             "allow_image_upload": settings.DEBUG,

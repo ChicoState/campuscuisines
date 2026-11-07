@@ -29,7 +29,7 @@
       </div>
       <fieldset class="form-field tag-field">
         <legend>{{ form.tags.label }}</legend>
-        <details class="tag-dropdown">
+        <details class="tag-dropdown"{% if form.is_bound and form.errors %} open{% endif %}>
           <summary class="tag-dropdown__summary">
             <span data-tags-summary="{{ form.selected_tag_ids|length }} tag{{ form.selected_tag_ids|length|pluralize }} selected">
               {{ form.selected_tag_ids|length }} tag{{ form.selected_tag_ids|length|pluralize }} selected
@@ -37,11 +37,17 @@
           </summary>
           <div class="tag-dropdown__options">
             {% for group in form.tag_groups %}
-              <section class="tag-dropdown__group" aria-labelledby="home-tag-category-{{ forloop.counter }}">
-                <h3 class="tag-dropdown__category" id="home-tag-category-{{ forloop.counter }}">{{ group.name }}</h3>
+              <section class="tag-dropdown__group" aria-labelledby="tag-category-{{ forloop.counter }}">
+                <h3 class="tag-dropdown__category" id="tag-category-{{ forloop.counter }}">{{ group.name }}</h3>
                 {% for tag in group.tags %}
                   <label class="tag-dropdown__option" for="id_tags_{{ tag.pk }}">
-                    <input id="id_tags_{{ tag.pk }}" name="tags" type="checkbox" value="{{ tag.pk }}">
+                    <input
+                      id="id_tags_{{ tag.pk }}"
+                      name="tags"
+                      type="checkbox"
+                      value="{{ tag.pk }}"
+                      {% if tag.pk|stringformat:"s" in form.selected_tag_ids %}checked{% endif %}
+                    >
                     <span>{{ tag.name }}</span>
                   </label>
                 {% endfor %}
