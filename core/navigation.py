@@ -21,11 +21,6 @@ NAVIGATION_ITEMS = (
         "url_name": "about",
         "active_url_names": ("about",),
     },
-    {
-        "label": "Account",
-        "url_name": "account",
-        "active_url_names": ("account",),
-    },
 )
 
 

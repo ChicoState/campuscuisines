@@ -9,7 +9,7 @@ from reviews.models import Review, Tag, TagCategory
 
 
 @pytest.mark.django_db
-def test_primary_navigation_has_five_tabs_and_no_images_tab(client) -> None:
+def test_primary_navigation_has_four_tabs_and_no_images_or_account_tab(client) -> None:
     response = client.get(reverse("home"))
 
     assert response.status_code == 200
@@ -21,12 +21,12 @@ def test_primary_navigation_has_five_tabs_and_no_images_tab(client) -> None:
         "Reviews",
         "Map/Locations",
         "About Us",
-        "Account",
     ]
     assert [navigation.index(label) for label in labels] == sorted(
         navigation.index(label) for label in labels
     )
     assert "Images" not in navigation
+    assert "Account" not in navigation
     assert navigation.count('aria-current="page"') == 1
 
 
@@ -58,7 +58,6 @@ def test_navigation_pages_render(client, url_name: str) -> None:
         ("reviews", "Reviews"),
         ("map", "Map/Locations"),
         ("about", "About Us"),
-        ("account", "Account"),
     ],
 )
 def test_navigation_marks_only_the_current_tab(

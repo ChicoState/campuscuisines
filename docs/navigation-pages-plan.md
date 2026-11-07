@@ -2,14 +2,13 @@
 
 ## Summary
 
-Reorganize Campus Cuisines into five bookmarkable, modular pages with shared top
+Reorganize Campus Cuisines into four bookmarkable, modular pages with shared top
 navigation:
 
 1. Home
 2. Reviews
 3. Map/Locations
 4. About Us
-5. Account
 
 The Map/Locations tab will include a dining hall map, campus locations,
 schedules, and pricing.
@@ -89,7 +88,7 @@ features to one tab should require minimal changes to unrelated tabs.
     integration.
 
 - [x] Add shared responsive navigation styling.
-  - Verify the order is Home, Reviews, Map/Locations, About Us, Account.
+  - Verify the order is Home, Reviews, Map/Locations, About Us.
   - Verify keyboard focus, skip-link behavior, active state, mobile layout, and
     screen-reader semantics.
 
@@ -118,7 +117,7 @@ features to one tab should require minimal changes to unrelated tabs.
 
 ## Test scenarios
 
-- Navigation renders all five tabs in the required order and omits Images.
+- Navigation renders all four tabs in the required order and omits Images and Account.
 - Current pages and nested routes receive the correct active state.
 - `aria-current="page"` appears only on the active tab.
 - Keyboard users can reach and activate every tab.
