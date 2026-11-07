@@ -318,9 +318,7 @@ def test_review_section_headings_stack_their_label_title_and_action() -> None:
     assert "gap: var(--space-2)" in heading_rules
 
     assert ".reviews-section__action" in stylesheet
-    action_rules = stylesheet.split(".reviews-section__action {", 1)[1].split("}", 1)[
-        0
-    ]
+    action_rules = stylesheet.split(".reviews-section__action {", 1)[1].split("}", 1)[0]
     assert "position: fixed" in action_rules
     assert "bottom: var(--space-4)" in action_rules
     assert "right: var(--space-4)" in action_rules
