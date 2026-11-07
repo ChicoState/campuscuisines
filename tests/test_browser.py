@@ -124,7 +124,7 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         expect(
             page.get_by_role("heading", name="Welcome to Campus Cuisines")
         ).to_be_visible()
-        page.get_by_role("link", name="Reviews").click()
+        page.get_by_role("link", name="Reviews", exact=True).click()
         page.get_by_role("button", name="Make a review").click()
 
         review_dialog = page.get_by_role("dialog", name="Review a dish")
@@ -158,7 +158,7 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         expect(
             page.get_by_role("dialog", name="Sign in to Campus Cuisines")
         ).to_have_count(0)
-        page.get_by_role("link", name="Reviews").click()
+        page.get_by_role("link", name="Reviews", exact=True).click()
         page.get_by_role("button", name="Make a review").click()
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")

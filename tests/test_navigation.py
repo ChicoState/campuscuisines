@@ -32,6 +32,11 @@ def test_primary_navigation_has_four_tabs_and_no_images_or_account_tab(client) -
 
 @pytest.mark.django_db
 def test_nested_image_upload_route_does_not_add_an_images_tab(client) -> None:
+    client.force_login(
+        User.objects.create_user(
+            username="navigation-uploader", email="navigation-uploader@csuchico.edu"
+        )
+    )
     with override_settings(DEBUG=True):
         response = client.get(reverse("image-upload"))
 

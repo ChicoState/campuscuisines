@@ -129,11 +129,8 @@ def _reviews_with_images():
     return reviews
 
 
+@eligible_login_required
 def image_upload(request):
-    if not settings.DEBUG or request.method == "POST":
-        if not is_eligible_user(request.user):
-            return redirect_to_eligible_login(request)
-
     if request.method == "POST":
         form = ImageAssetUploadForm(request.POST, request.FILES)
         if form.is_valid():

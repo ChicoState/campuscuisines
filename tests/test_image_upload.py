@@ -30,11 +30,14 @@ def valid_image() -> SimpleUploadedFile:
 @pytest.mark.django_db
 @override_settings(DEBUG=True, STORAGES=TEST_STORAGES)
 def test_debug_mode_still_rejects_anonymous_image_uploads(client) -> None:
+    get_response = client.get(reverse("image-upload"))
     response = client.post(
         reverse("image-upload"),
         {"file": valid_image(), "alt_text": "A campus meal", "caption": "Lunch"},
     )
 
+    assert get_response.status_code == 302
+    assert get_response.url == f"/accounts/login/?next={reverse('image-upload')}"
     assert response.status_code == 302
     assert response.url == f"/accounts/login/?next={reverse('image-upload')}"
     assert not ImageAsset.objects.exists()
