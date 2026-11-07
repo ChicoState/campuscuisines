@@ -4,7 +4,7 @@ from typing import cast
 
 import pytest
 from django.contrib.staticfiles import finders
-from django.test import Client
+from django.test import Client, SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -102,7 +102,12 @@ def test_invalid_tag_submission_preserves_selected_tags_and_opens_dropdown(
     assert response.status_code == 200
     assert '<details class="tag-dropdown" open>' in content
     assert f'id="id_tags_{vegetarian.pk}"' in content
-    assert f'value="{vegetarian.pk}"\n                      checked' in content
+    SimpleTestCase().assertContains(
+        response,
+        f'<input id="id_tags_{vegetarian.pk}" name="tags" type="checkbox" '
+        f'value="{vegetarian.pk}" checked>',
+        html=True,
+    )
     assert 'data-tags-summary="1 tag selected"' in content
 
 

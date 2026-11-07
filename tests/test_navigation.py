@@ -1,5 +1,5 @@
 import pytest
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -214,5 +214,10 @@ def test_invalid_review_preserves_selected_tags_and_opens_dropdown(client) -> No
     content = response.content.decode()
     assert response.status_code == 200
     assert '<details class="tag-dropdown" open>' in content
-    assert f'value="{vegetarian.pk}"\n                      checked' in content
+    SimpleTestCase().assertContains(
+        response,
+        f'<input id="id_tags_{vegetarian.pk}" name="tags" type="checkbox" '
+        f'value="{vegetarian.pk}" checked>',
+        html=True,
+    )
     assert 'data-tags-summary="1 tag selected"' in content
