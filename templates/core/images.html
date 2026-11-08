@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Images | Campus Cuisines{% endblock %}
+
+{% block content %}
+  <section class="page-section" aria-labelledby="images-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Campus food in pictures</p>
+        <h1 id="images-heading">Images</h1>
+      </div>
+      {% if allow_image_upload %}
+        <a class="text-link" href="{% url 'image-upload' %}">Upload an image</a>
+      {% endif %}
+    </div>
+    {% if image_items %}
+      <div class="image-grid">
+        {% for image in image_items %}
+          <figure class="image-card">
+            <img src="{{ image.url }}" alt="{{ image.asset.alt_text }}" loading="lazy">
+            {% if image.asset.caption %}<figcaption>{{ image.asset.caption }}</figcaption>{% endif %}
+          </figure>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">No published images yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

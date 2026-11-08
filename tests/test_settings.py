@@ -73,3 +73,21 @@ def test_default_media_storage_uses_private_s3_compatible_storage() -> None:
     assert default_storage["OPTIONS"]["default_acl"] is None
     assert default_storage["OPTIONS"]["querystring_auth"] is True
     assert default_storage["OPTIONS"]["addressing_style"] == "path"
+
+
+def test_google_oauth_configuration_is_identity_only_and_post_started() -> None:
+    assert settings.SOCIALACCOUNT_LOGIN_ON_GET is False
+    assert settings.SOCIALACCOUNT_STORE_TOKENS is False
+    assert settings.SOCIALACCOUNT_PROVIDERS["google"]["SCOPE"] == [
+        "openid",
+        "email",
+        "profile",
+    ]
+    assert settings.SOCIALACCOUNT_PROVIDERS["google"]["OAUTH_PKCE_ENABLED"] is True
+    assert settings.GOOGLE_OAUTH_ALLOWED_EMAIL_DOMAINS == ("csuchico.edu",)
+
+
+def test_google_oauth_credentials_are_not_persisted_in_database_configuration() -> None:
+    assert "allauth.socialaccount" in settings.INSTALLED_APPS
+    assert "allauth.socialaccount.providers.google" in settings.INSTALLED_APPS
+    assert "SOCIALACCOUNT_ADAPTER" in dir(settings)

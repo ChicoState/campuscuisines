@@ -22,7 +22,7 @@ def test_home_filters_reviews_by_selected_tag(client) -> None:
     create_review("Veggie bowl", [vegetarian])
     create_review("Chicken bowl", [])
 
-    response = client.get("/", {"review_tag": str(vegetarian.pk)})
+    response = client.get("/reviews/", {"review_tag": str(vegetarian.pk)})
 
     assert response.status_code == 200
     content = response.content.decode()
@@ -38,7 +38,7 @@ def test_home_filters_reviews_by_selected_tag(client) -> None:
 def test_home_ignores_unknown_review_tag_filter(client) -> None:
     create_review("Chicken bowl", [])
 
-    response = client.get("/", {"review_tag": "not-a-tag"})
+    response = client.get("/reviews/", {"review_tag": "not-a-tag"})
 
     assert response.status_code == 200
     assert "Chicken bowl" in response.content.decode()

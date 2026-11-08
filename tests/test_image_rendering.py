@@ -30,7 +30,9 @@ def image_asset(
 @pytest.mark.django_db
 def test_new_image_assets_are_unpublished() -> None:
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
 
     asset = image_asset(uploaded_by=user)
@@ -44,7 +46,9 @@ def test_signed_image_url_uses_the_browser_reachable_storage_endpoint() -> None:
     from core.services.images import SIGNED_URL_EXPIRY_SECONDS, signed_image_url
 
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=user)
 
@@ -64,10 +68,14 @@ def test_signed_image_url_rejects_non_owners_for_an_unpublished_asset() -> None:
     from core.services.images import signed_image_url
 
     owner = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     other_user = User.objects.create_user(
-        username="other-user", password=get_random_string(32)
+        username="other-user",
+        email="other-user@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=owner)
 
@@ -80,7 +88,9 @@ def test_signed_image_url_rejects_anonymous_rendering_of_an_unpublished_asset() 
     from core.services.images import signed_image_url
 
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=user)
 
@@ -94,7 +104,9 @@ def test_signed_image_url_allows_public_rendering_after_publication() -> None:
     from core.services.images import signed_image_url
 
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=user, published_at=timezone.now())
 
@@ -110,7 +122,9 @@ def test_signed_image_url_allows_public_rendering_after_publication() -> None:
 @pytest.mark.django_db
 def test_owner_can_render_an_unpublished_image_asset(client) -> None:
     user = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=user)
     client.force_login(user)
@@ -131,10 +145,14 @@ def test_owner_can_render_an_unpublished_image_asset(client) -> None:
 @pytest.mark.django_db
 def test_non_owner_cannot_render_an_unpublished_image_asset(client) -> None:
     owner = User.objects.create_user(
-        username="image-owner", password=get_random_string(32)
+        username="image-owner",
+        email="image-owner@csuchico.edu",
+        password=get_random_string(32),
     )
     other_user = User.objects.create_user(
-        username="other-user", password=get_random_string(32)
+        username="other-user",
+        email="other-user@csuchico.edu",
+        password=get_random_string(32),
     )
     asset = image_asset(uploaded_by=owner)
     client.force_login(other_user)

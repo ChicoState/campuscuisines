@@ -1,0 +1,10 @@
+<dialog class="account-dialog" id="account-login-dialog" aria-labelledby="account-login-dialog-title">
+  <div class="account-dialog__content">
+    <form method="dialog" class="account-dialog__dismiss">
+      <button type="submit" class="dialog-close" aria-label="Close sign-in dialog">×</button>
+    </form>
+    <p class="account-dialog__eyebrow">Campus access</p>
+    <h2 id="account-login-dialog-title">Sign in to Campus Cuisines</h2>
+    {% include "account/_login_content.html" with next_url=request.get_full_path %}
+  </div>
+</dialog>

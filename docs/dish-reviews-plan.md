@@ -1,5 +1,13 @@
 # Dish Reviews MVP Implementation Plan
 
+## Current access policy
+
+This plan records the original anonymous-review MVP. The later approved
+`google-accounts-plan.md` supersedes its anonymous-submission rules: anyone may
+read published reviews, but only eligible signed-in campus users may submit
+reviews. This applies in debug mode too. The `reviewer_name` field remains
+self-entered text; it does not grant access or establish account identity.
+
 ## Summary
 
 Keep the current informational Campus Cuisines homepage introduction. Add a
