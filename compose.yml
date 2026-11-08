@@ -49,7 +49,7 @@ services:
     networks: [development]
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    image: pgsty/silo:latest
     command: server /data --console-address :9001
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-local-minio-user}
@@ -68,7 +68,7 @@ services:
     networks: [development]
 
   minio-init:
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    image: pgsty/silo:latest
     entrypoint: ["/bin/sh", "-ec"]
     command:
       - >
