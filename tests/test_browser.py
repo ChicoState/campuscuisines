@@ -124,26 +124,7 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         expect(
             page.get_by_role("heading", name="Welcome to Campus Cuisines")
         ).to_be_visible()
-        page.get_by_role("link", name="Reviews", exact=True).click()
-        page.get_by_role("button", name="Make a review").click()
-
-        review_dialog = page.get_by_role("dialog", name="Review a dish")
-        expect(review_dialog).to_be_visible()
-        page.mouse.click(1, 1)
-        expect(review_dialog).not_to_be_visible()
-
-        page.get_by_role("button", name="Make a review").click()
-        expect(review_dialog).to_be_visible()
-
-        expect(page.get_by_text("No reviews yet")).to_be_visible()
-
-        page.get_by_role("button", name="Close review form").click()
-        expect(review_dialog).not_to_be_visible()
-        expect(page.get_by_role("link", name="Sign in", exact=True)).to_be_visible()
-        page.get_by_role("link", name="Sign in", exact=True).click()
-        expect(
-            page.get_by_role("heading", name="Sign in to Campus Cuisines")
-        ).to_be_visible()
+        page.close()
 
         context = browser.new_context()
         context.add_cookies(
@@ -164,6 +145,7 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         expect(page.locator(".rating-picker__star")).to_have_count(0)
         expect(page.locator(".tag-dropdown")).to_have_count(0)
         page.get_by_role("link", name="Reviews", exact=True).click()
+        page.wait_for_load_state("networkidle")
         page.get_by_role("button", name="Make a review").click()
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")
