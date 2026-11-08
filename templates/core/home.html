@@ -17,48 +17,6 @@
     {% endif %}
   </section>
 
-  {% if form %}
-    <section class="reviews-section" aria-labelledby="home-review-tools-heading">
-      <h2 id="home-review-tools-heading">Review tools</h2>
-      <div class="rating-picker__stars" aria-hidden="true">
-        <span class="rating-picker__star" data-rating-star="1">★</span>
-        <span class="rating-picker__star" data-rating-star="2">★</span>
-        <span class="rating-picker__star" data-rating-star="3">★</span>
-        <span class="rating-picker__star" data-rating-star="4">★</span>
-        <span class="rating-picker__star" data-rating-star="5">★</span>
-      </div>
-      <fieldset class="form-field tag-field">
-        <legend>{{ form.tags.label }}</legend>
-        <details class="tag-dropdown"{% if form.is_bound and form.errors %} open{% endif %}>
-          <summary class="tag-dropdown__summary">
-            <span data-tags-summary="{{ form.selected_tag_ids|length }} tag{{ form.selected_tag_ids|length|pluralize }} selected">
-              {{ form.selected_tag_ids|length }} tag{{ form.selected_tag_ids|length|pluralize }} selected
-            </span>
-          </summary>
-          <div class="tag-dropdown__options">
-            {% for group in form.tag_groups %}
-              <section class="tag-dropdown__group" aria-labelledby="tag-category-{{ forloop.counter }}">
-                <h3 class="tag-dropdown__category" id="tag-category-{{ forloop.counter }}">{{ group.name }}</h3>
-                {% for tag in group.tags %}
-                  <label class="tag-dropdown__option" for="id_tags_{{ tag.pk }}">
-                    <input
-                      id="id_tags_{{ tag.pk }}"
-                      name="tags"
-                      type="checkbox"
-                      value="{{ tag.pk }}"
-                      {% if tag.pk|stringformat:"s" in form.selected_tag_ids %}checked{% endif %}
-                    >
-                    <span>{{ tag.name }}</span>
-                  </label>
-                {% endfor %}
-              </section>
-            {% endfor %}
-          </div>
-        </details>
-      </fieldset>
-    </section>
-  {% endif %}
-
   <section class="reviews-section reviews-feed" aria-labelledby="review-feed-heading">
     <div class="reviews-section__heading">
       <p class="eyebrow">Fresh from campus</p>

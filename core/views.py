@@ -24,17 +24,10 @@ def home(request):
         return _handle_review_submission(request)
 
     reviews = _reviews_with_images()[:3]
-    form = (
-        ReviewForm(allow_image_upload=settings.DEBUG)
-        if is_eligible_user(request.user)
-        else None
-    )
-
     return render(
         request,
         "core/home.html",
         {
-            "form": form,
             "reviews": reviews,
         },
     )

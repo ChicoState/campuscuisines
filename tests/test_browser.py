@@ -160,6 +160,9 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         expect(
             page.get_by_role("dialog", name="Sign in to Campus Cuisines")
         ).to_have_count(0)
+        expect(page.get_by_role("heading", name="Review tools")).to_have_count(0)
+        expect(page.locator(".rating-picker__star")).to_have_count(0)
+        expect(page.locator(".tag-dropdown")).to_have_count(0)
         page.get_by_role("link", name="Reviews", exact=True).click()
         page.get_by_role("button", name="Make a review").click()
         page.get_by_label("Dish name").fill("Mushroom ramen")

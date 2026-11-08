@@ -34,45 +34,14 @@ def test_reviews_page_renders_five_rating_stars(client) -> None:
 
 
 @pytest.mark.django_db
-def test_homepage_renders_five_rating_stars(client) -> None:
+def test_signed_in_homepage_does_not_render_review_tools(client) -> None:
     client.force_login(eligible_user())
     response = client.get(reverse("home"))
 
     content = response.content.decode()
-    assert content.count('class="rating-picker__star" data-rating-star=') == 5
-
-
-@pytest.mark.django_db
-def test_homepage_offers_tags_in_a_collapsible_grouped_multi_select(client) -> None:
-    client.force_login(eligible_user())
-    allergen_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        name="Allergens"
-    )
-    peanuts = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        category=allergen_category, name="Contains peanuts"
-    )
-    dietary_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        name="Dietary"
-    )
-    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        category=dietary_category, name="Vegetarian"
-    )
-
-    response = client.get(reverse("home"))
-
-    content = response.content.decode()
-    assert '<details class="tag-dropdown"' in content
-    assert 'data-tags-summary="0 tags selected"' in content
-    assert (
-        'class="tag-dropdown__category" id="tag-category-1">Allergens</h3>' in content
-    )
-    assert 'class="tag-dropdown__category" id="tag-category-2">Dietary</h3>' in content
-    assert f'id="id_tags_{peanuts.pk}"' in content
-    assert f'id="id_tags_{vegetarian.pk}"' in content
-    assert 'name="tags"' in content
-    assert 'type="checkbox"' in content
-    assert "data-tags-summary" in content
-    assert "Allergens: Contains peanuts" not in content
+    assert "Review tools" not in content
+    assert 'class="rating-picker__star"' not in content
+    assert 'class="tag-dropdown"' not in content
 
 
 @pytest.mark.django_db
