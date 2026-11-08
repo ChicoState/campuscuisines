@@ -137,6 +137,8 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
 
         expect(page.get_by_text("No reviews yet")).to_be_visible()
 
+        page.get_by_role("button", name="Close review form").click()
+        expect(review_dialog).not_to_be_visible()
         expect(page.get_by_role("link", name="Sign in", exact=True)).to_be_visible()
         page.get_by_role("link", name="Sign in", exact=True).click()
         expect(
