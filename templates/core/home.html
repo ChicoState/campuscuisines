@@ -22,46 +22,6 @@
       <p class="eyebrow">Fresh from campus</p>
       <h2 id="review-feed-heading">Recent reviews</h2>
     </div>
-    <form method="get" class="review-filter" aria-label="Filter reviews by tag">
-      <details
-        class="tag-dropdown review-filter__dropdown"
-        data-tags-input-name="review_tag"
-      >
-        <summary class="tag-dropdown__summary">
-          <span>Filter reviews by tag</span>
-          <span data-tags-summary>
-            {{ selected_review_tag_ids|length }} tag{{ selected_review_tag_ids|length|pluralize }} selected
-          </span>
-        </summary>
-        <div class="tag-dropdown__options">
-          {% for group in form.tag_groups %}
-            <section class="tag-dropdown__group" aria-labelledby="review-tag-category-{{ forloop.counter }}">
-              <h3 class="tag-dropdown__category" id="review-tag-category-{{ forloop.counter }}">{{ group.name }}</h3>
-              {% for tag in group.tags %}
-                <label class="tag-dropdown__option" for="review-tag-{{ tag.pk }}">
-                  <input
-                    id="review-tag-{{ tag.pk }}"
-                    name="review_tag"
-                    type="checkbox"
-                    value="{{ tag.pk }}"
-                    {% if tag.pk in selected_review_tag_ids %}checked{% endif %}
-                  >
-                  <span>{{ tag.name }}</span>
-                </label>
-              {% endfor %}
-            </section>
-          {% empty %}
-            <p class="form-help">No review tags are available yet.</p>
-          {% endfor %}
-        </div>
-      </details>
-      <div class="review-filter__actions">
-        <button type="submit">Apply filters</button>
-        {% if selected_review_tag_ids %}
-          <a href="{% url 'home' %}#review-feed-heading">Clear filters</a>
-        {% endif %}
-      </div>
-    </form>
     {% if reviews %}
       <ol class="review-list">
         {% for review in reviews %}
