@@ -4,7 +4,7 @@ from typing import cast
 
 import pytest
 from django.contrib.staticfiles import finders
-from django.test import Client
+from django.test import Client, SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -19,53 +19,29 @@ def eligible_user() -> User:
 
 
 @pytest.mark.django_db
-def test_homepage_shows_an_empty_review_feed(client) -> None:
-    response = client.get(reverse("home"))
+def test_reviews_page_shows_an_empty_review_feed(client) -> None:
+    response = client.get(reverse("reviews"))
 
     assert response.status_code == 200
     assert "No reviews yet" in response.content.decode()
 
 
 @pytest.mark.django_db
-def test_homepage_renders_five_rating_stars(client) -> None:
-    client.force_login(eligible_user())
-    response = client.get(reverse("home"))
-
+def test_reviews_page_renders_five_rating_stars(client) -> None:
+    response = client.get(reverse("reviews"))
     content = response.content.decode()
     assert content.count('class="rating-picker__star" data-rating-star=') == 5
 
 
 @pytest.mark.django_db
-def test_homepage_offers_tags_in_a_collapsible_grouped_multi_select(client) -> None:
+def test_signed_in_homepage_does_not_render_review_tools(client) -> None:
     client.force_login(eligible_user())
-    allergen_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        name="Allergens"
-    )
-    peanuts = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        category=allergen_category, name="Contains peanuts"
-    )
-    dietary_category = TagCategory.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        name="Dietary"
-    )
-    vegetarian = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
-        category=dietary_category, name="Vegetarian"
-    )
-
     response = client.get(reverse("home"))
 
     content = response.content.decode()
-    assert '<details class="tag-dropdown"' in content
-    assert 'data-tags-summary="0 tags selected"' in content
-    assert (
-        'class="tag-dropdown__category" id="tag-category-1">Allergens</h3>' in content
-    )
-    assert 'class="tag-dropdown__category" id="tag-category-2">Dietary</h3>' in content
-    assert f'id="id_tags_{peanuts.pk}"' in content
-    assert f'id="id_tags_{vegetarian.pk}"' in content
-    assert 'name="tags"' in content
-    assert 'type="checkbox"' in content
-    assert "data-tags-summary" in content
-    assert "Allergens: Contains peanuts" not in content
+    assert "Review tools" not in content
+    assert 'class="rating-picker__star"' not in content
+    assert 'class="tag-dropdown"' not in content
 
 
 @pytest.mark.django_db
@@ -95,7 +71,12 @@ def test_invalid_tag_submission_preserves_selected_tags_and_opens_dropdown(
     assert response.status_code == 200
     assert '<details class="tag-dropdown" open>' in content
     assert f'id="id_tags_{vegetarian.pk}"' in content
-    assert f'value="{vegetarian.pk}"\n                      checked' in content
+    SimpleTestCase().assertContains(
+        response,
+        f'<input id="id_tags_{vegetarian.pk}" name="tags" type="checkbox" '
+        f'value="{vegetarian.pk}" checked>',
+        html=True,
+    )
     assert 'data-tags-summary="1 tag selected"' in content
 
 
@@ -265,7 +246,7 @@ def test_homepage_lists_newest_review_first_and_escapes_review_text(client) -> N
         created_at=timezone.now() - timedelta(days=1)
     )
 
-    response = client.get(reverse("home"))
+    response = client.get(reverse("reviews"))
 
     content = response.content.decode()
     assert content.index("Newer dish") < content.index("Older dish")
@@ -295,3 +276,34 @@ def test_rating_picker_uses_visible_star_glyphs_with_a_contrasting_color() -> No
     stylesheet = Path(stylesheet_path).read_text()
     assert "color: var(--color-muted)" in stylesheet
     assert "clip-path" not in stylesheet
+
+
+def test_review_section_headings_stack_their_label_title_and_action() -> None:
+    stylesheet_path = cast(str | None, finders.find("core/site.css"))
+
+    assert stylesheet_path is not None
+    stylesheet = Path(stylesheet_path).read_text()
+    heading_rules = stylesheet.split(".reviews-section__heading {", 1)[1].split("}", 1)[
+        0
+    ]
+
+    assert "display: grid" in heading_rules
+    assert "justify-items: start" in heading_rules
+    assert "gap: var(--space-2)" in heading_rules
+
+    assert ".reviews-section__action" in stylesheet
+    action_rules = stylesheet.split(".reviews-section__action {", 1)[1].split("}", 1)[0]
+    assert "position: fixed" in action_rules
+    assert "bottom: var(--space-4)" in action_rules
+    assert "right: var(--space-4)" in action_rules
+
+
+def test_home_welcome_spacing_matches_other_page_sections() -> None:
+    stylesheet_path = cast(str | None, finders.find("core/site.css"))
+
+    assert stylesheet_path is not None
+    stylesheet = Path(stylesheet_path).read_text()
+    welcome_rules = stylesheet.split(".welcome {", 1)[1].split("}", 1)[0]
+
+    assert "padding-block: var(--space-12)" in welcome_rules
+    assert "clamp(" not in welcome_rules

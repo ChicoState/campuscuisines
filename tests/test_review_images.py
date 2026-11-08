@@ -132,7 +132,7 @@ def test_homepage_renders_an_attached_published_review_image(
         lambda _image, _viewer: "https://images.test/ramen",
     )
 
-    response = client.get(reverse("home"))
+    response = client.get(reverse("reviews"))
 
     content = response.content.decode()
     assert 'class="review__image"' in content
@@ -153,6 +153,6 @@ def test_homepage_omits_a_soft_deleted_review_image(client, monkeypatch) -> None
         "core.views.signed_image_url", lambda _image, _viewer: "unexpected"
     )
 
-    response = client.get(reverse("home"))
+    response = client.get(reverse("reviews"))
 
     assert 'class="review__image"' not in response.content.decode()

@@ -10,14 +10,16 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 - `accounts/`: custom user model, Google identity eligibility, access guards,
   sign-in/logout views, admin entry, and migrations. Do not change
   `AUTH_USER_MODEL` after migrations exist.
-- `core/`, `templates/`, `static/`: public homepage, reusable image assets, templates, and browser assets. `ImageAsset` is independent of product models.
+- `core/`, `templates/`, `static/`: public homepage, shared navigation pages,
+  reusable image assets, templates, and browser assets. `ImageAsset` is independent
+  of product models.
 - `templates/account/`, `static/account/`: reusable Google sign-in content and dialog assets; preserve the standalone sign-in page for protected redirects and no-JavaScript access.
 - `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
 - `reviews/`: public dish-review model, form, explicit review-image association, admin registration, and migrations.
 - `docs/`: living specifications and approved implementation plans, including
-  `dish-reviews-plan.md`, `image-upload-plan.md`, `google-accounts-plan.md`, and
-  storage-lifecycle decisions.
-- Restaurants, menu items, galleries, publishing endpoints, and other product models: not created yet.
+  `dish-reviews-plan.md`, `image-upload-plan.md`, `google-accounts-plan.md`,
+  `navigation-pages-plan.md`, and storage-lifecycle decisions.
+- Restaurants, menu items, publishing endpoints, and other product models: not created yet. The public `/images/` page is a read-only gallery of already-published image assets.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
 - `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local Django/PostgreSQL/MinIO services and production-image configuration.
 - `scripts/`: configuration verifier and Compose smoke test.

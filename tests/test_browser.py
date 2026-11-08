@@ -52,6 +52,12 @@ def test_sign_in_opens_a_dialog_and_preserves_the_page(live_server) -> None:
         expect(dialog.locator('input[name="csrfmiddlewaretoken"]')).to_have_count(1)
         assert page.url == live_server.url + "/"
 
+        page.mouse.click(1, 1)
+        expect(dialog).not_to_be_visible()
+        expect(sign_in).to_be_focused()
+
+        sign_in.click()
+        expect(dialog).to_be_visible()
         page.keyboard.press("Escape")
         expect(dialog).not_to_be_visible()
         expect(sign_in).to_be_focused()
@@ -62,7 +68,7 @@ def test_sign_in_opens_a_dialog_and_preserves_the_page(live_server) -> None:
         assert dialog.evaluate(
             "element => element.getBoundingClientRect().right <= window.innerWidth"
         )
-        dialog.get_by_role("button", name="Close").click()
+        dialog.get_by_role("button", name="Close sign-in dialog").click()
         expect(dialog).not_to_be_visible()
 
         no_script = browser.new_context(java_script_enabled=False)
@@ -115,17 +121,10 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         )
 
         page.goto(live_server.url, wait_until="networkidle")
-
         expect(
             page.get_by_role("heading", name="Welcome to Campus Cuisines")
         ).to_be_visible()
-        expect(page.get_by_text("No reviews yet")).to_be_visible()
-
-        expect(page.get_by_role("link", name="Sign in", exact=True)).to_be_visible()
-        page.get_by_role("link", name="Sign in", exact=True).click()
-        expect(
-            page.get_by_role("heading", name="Sign in to Campus Cuisines")
-        ).to_be_visible()
+        page.close()
 
         context = browser.new_context()
         context.add_cookies(
@@ -142,6 +141,12 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         expect(
             page.get_by_role("dialog", name="Sign in to Campus Cuisines")
         ).to_have_count(0)
+        expect(page.get_by_role("heading", name="Review tools")).to_have_count(0)
+        expect(page.locator(".rating-picker__star")).to_have_count(0)
+        expect(page.locator(".tag-dropdown")).to_have_count(0)
+        page.get_by_role("link", name="Reviews", exact=True).click()
+        page.wait_for_load_state("networkidle")
+        page.get_by_role("button", name="Make a review").click()
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")
         expect(page.get_by_role("radio")).to_have_count(5)
@@ -227,7 +232,8 @@ def test_review_form_uploads_and_renders_an_image_in_chromium(
             ),
         )
 
-        page.goto(live_server.url, wait_until="networkidle")
+        page.goto(f"{live_server.url}/reviews/", wait_until="networkidle")
+        page.get_by_role("button", name="Make a review").click()
         page.get_by_label("Dish name").fill("Mushroom ramen")
         page.get_by_label("Your name").fill("Avery")
         page.get_by_label("4 out of 5 stars — Good").click()

@@ -39,6 +39,8 @@ class Tag(models.Model):
 
 
 class Review(models.Model):
+    objects: models.Manager
+
     dish_name = models.CharField(max_length=100)
     reviewer_name = models.CharField(max_length=50)
     rating = models.PositiveSmallIntegerField(

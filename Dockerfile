@@ -5,6 +5,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
+# The upstream image can be published before Debian security updates land in
+# the image layer. Apply the current Debian security updates so runtime system
+# libraries (including zlib) are not left at a vulnerable version.
+RUN apt-get update \
+    && apt-get upgrade --yes \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 FROM base AS dependencies

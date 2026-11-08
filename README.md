@@ -1,10 +1,14 @@
 # Campus Cuisines
 
 Campus Cuisines is a Django web application foundation for campus-food content. It
-includes a public home page, Google-only Chico State accounts, a reusable private
-image-asset workflow, and a dish-review MVP. Anyone can browse published content;
-only an eligible, verified `@csuchico.edu` Google identity can publish reviews or
-upload images.
+includes a public landing page, shared responsive navigation, a deliberately minimal
+custom user model, and a reusable private image-asset workflow. The Reviews page
+provides an anonymous dish-review MVP: anyone can submit a dish name, reviewer name,
+whole-star rating, and review, then see the newest reviews first. Explicit local debug
+mode also permits one optional image per review.
+The application also provides Google-only Chico State accounts. Anyone can browse
+published content; only an eligible, verified `@csuchico.edu` Google identity can
+publish reviews or upload images.
 
 ## Repository map
 
@@ -20,7 +24,7 @@ upload images.
 | `accounts/` | Google-only account journey, eligibility adapter, custom user model, and migrations |
 | `core/`, `templates/`, `static/` | Public homepage, reusable image-asset workflow, templates, and browser assets |
 | `reviews/` | Public dish-review model, form, explicit image association, admin registration, and migrations |
-| `docs/` | Living implementation specifications, plans, and architecture decisions, including the [dish reviews MVP plan](docs/dish-reviews-plan.md) |
+| `docs/` | Living implementation specifications, plans, and architecture decisions, including the [navigation pages plan](docs/navigation-pages-plan.md) and [dish reviews MVP plan](docs/dish-reviews-plan.md) |
 
 ## Getting started
 
@@ -141,6 +145,18 @@ storage, visibility, and retention rationale.
 
 CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage enforcement, Chromium homepage and image-workflow smoke tests, security scans, and a production-image static-file check. Static files use Django `collectstatic` with WhiteNoise; Django documents `STATIC_ROOT` and the static-files workflow in its [staticfiles reference](https://docs.djangoproject.com/en/5.2/ref/contrib/staticfiles/).
 
+## Public pages
+
+The shared primary navigation links to Home (`/`), Reviews (`/reviews/`),
+Map/Locations (`/map/`), About Us (`/about/`), and Account (`/account/`). Home is a
+landing page with a short recent-review preview. The full review form and feed live
+on Reviews. Map/Locations and Account are intentionally placeholder pages while
+their product requirements are developed.
+
+`/images/` is a direct, non-navigation route that displays only published,
+non-deleted image assets. Existing `/images/upload/` and `/images/<id>/` routes remain
+available for the private image workflow.
+
 ## Google-only accounts and access levels
 
 The homepage and published review feed are `public` read-only features. Review
@@ -232,7 +248,8 @@ even when another staff member has `accounts` model permissions. Do not grant
 
 ## Dish reviews MVP
 
-The homepage keeps its existing welcome content and adds a review form plus a newest-first feed. A review requires:
+The Reviews page contains the review form and newest-first feed. The homepage retains
+the welcome content and a concise review preview. A review requires:
 
 - Dish name (up to 100 characters)
 - Reviewer name (up to 50 characters)
