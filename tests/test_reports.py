@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 from django.db import IntegrityError
 from django.urls import reverse
@@ -27,8 +29,8 @@ def test_report_stores_reporter_and_review() -> None:
     report = Report(reporter=create_user(), review=create_review())
 
     report.full_clean()
-    assert report.reporter.email == "student@csuchico.edu"
-    assert report.review.dish_name == "Mushroom ramen"
+    assert cast(User, report.reporter).email == "student@csuchico.edu"
+    assert cast(Review, report.review).dish_name == "Mushroom ramen"
 
 
 def test_report_database_constraint_prevents_duplicate_reporter_review_pair() -> None:
