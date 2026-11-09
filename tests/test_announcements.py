@@ -8,11 +8,11 @@ from announcements.models import Announcement, AnnouncementDismissal
 
 
 @pytest.mark.django_db
-def test_migration_seed_provides_test_announcement(client) -> None:
+def test_migration_seed_provides_announcements(client) -> None:
     response = client.get(reverse("home"))
 
     assert response.status_code == 200
-    assert response.context["announcement_count"] == 1
+    assert response.context["announcement_count"] == 2
     assert response.context["announcement_items"][0].title == "Test announcement"
 
 
@@ -36,11 +36,7 @@ def test_anonymous_dismissal_is_saved_and_removes_announcement(client) -> None:
 def test_non_dismissable_announcement_has_no_dismiss_control_and_cannot_be_dismissed(
     client,
 ) -> None:
-    announcement = Announcement.objects.create(
-        title="Read-only announcement",
-        body="This announcement must remain visible.",
-        is_dismissable=False,
-    )
+    announcement = Announcement.objects.get(title="Read-only announcement")
 
     response = client.get(reverse("home"))
     content = response.content.decode()
@@ -101,7 +97,7 @@ def test_authenticated_dismissal_is_saved_for_that_user_only(client) -> None:
     assert client.get(reverse("home")).context["announcement_count"] == 0
 
     client.force_login(other_user)
-    assert client.get(reverse("home")).context["announcement_count"] == 1
+    assert client.get(reverse("home")).context["announcement_count"] == 2
 
 
 @pytest.mark.django_db
@@ -169,7 +165,7 @@ def test_staff_can_reannounce_older_announcement_and_clear_dismissals(
     announcement.refresh_from_db()
     assert announcement.is_active is True
     assert not AnnouncementDismissal.objects.filter(announcement=announcement).exists()
-    assert client.get(reverse("home")).context["announcement_count"] == 2
+    assert client.get(reverse("home")).context["announcement_count"] == 3
 
 
 @pytest.mark.django_db

@@ -90,11 +90,6 @@ body {
   padding: var(--space-2) var(--space-4);
 }
 
-.announcements-trigger__icon {
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
 .announcements-trigger__count {
   display: inline-grid;
   min-width: 1.5rem;

@@ -1,0 +1,6 @@
+services:
+  minio:
+    image: pgsty/silo:latest
+
+  minio-init:
+    image: pgsty/silo:latest

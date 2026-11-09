@@ -266,7 +266,7 @@ def test_homepage_returns_a_welcome_page(client) -> None:
 
 
 @pytest.mark.django_db
-def test_homepage_renders_one_admin_announcement_dialog(client) -> None:
+def test_homepage_renders_admin_announcement_dialog(client) -> None:
     response = client.get(reverse("home"))
 
     content = response.content.decode()
@@ -274,7 +274,7 @@ def test_homepage_renders_one_admin_announcement_dialog(client) -> None:
     assert "data-announcement-open" in content
     assert "<dialog" in content
     assert 'class="announcement-dialog"' in content
-    assert content.count("data-announcement-item") == 1
+    assert content.count("data-announcement-item") == 2
     assert "Test announcement" in content
     assert "Posted by Admin" in content
     assert "core/announcements.js" in content

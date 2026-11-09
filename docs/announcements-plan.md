@@ -11,9 +11,10 @@ review all announcements on a separate history page.
 - The button is available in the shared green header on every page.
 - A native HTML `dialog` provides modal semantics, focus containment, and Escape
   handling without a new dependency.
-- The seed data contains one test announcement:
+- The seed data contains one dismissable test announcement:
   "Test announcement," attributed to Admin, with the body "This is a test
-  announcement."
+  announcement," and one non-dismissable announcement titled
+  "Read-only announcement."
 - Announcement content is stored in Django's database and can be managed in Django
   admin. Dismissals are stored per authenticated user or anonymous session.
 - Each announcement can be dismissed from the X button in its heading.
@@ -95,8 +96,8 @@ Keep user-facing copy in the template so Django auto-escaping remains the defaul
 ## Success criteria
 
 - The green banner visibly contains an Announcements button.
-- Activating the button opens an accessible modal containing exactly one test
-  announcement attributed to Admin.
+- Activating the button opens an accessible modal containing the seeded
+  dismissable and non-dismissable announcements attributed to Admin.
 - Opening and closing the modal never changes the page URL.
 - Mouse and keyboard users can close the modal and continue from the trigger.
-- Existing application behavior remains unchanged.
+- Existing dismissal, history, and navigation behavior remains unchanged.

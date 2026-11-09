@@ -11,8 +11,8 @@ from django.utils.crypto import get_random_string
 from playwright.sync_api import expect, sync_playwright
 
 from accounts.models import User
-from catalog.models import MenuItem
 from announcements.models import Announcement
+from catalog.models import MenuItem
 from core.models import ImageAsset
 from reviews.models import Review, Tag, TagCategory
 
@@ -246,7 +246,7 @@ def test_announcement_modal_opens_and_closes_without_navigation(
         expect(dialog).to_be_visible()
         expect(dialog.get_by_role("heading", name="Test announcement")).to_be_visible()
         expect(dialog.get_by_text("Posted by Admin")).to_be_visible()
-        expect(dialog.locator("[data-announcement-item]")).to_have_count(1)
+        expect(dialog.locator("[data-announcement-item]")).to_have_count(2)
         assert page.url == starting_url
 
         dialog.get_by_role("button", name="Close announcements").click()
@@ -290,10 +290,10 @@ def test_announcement_can_be_dismissed_from_the_heading(
         dismiss_button = dialog.get_by_role("button", name="Dismiss Test announcement")
         expect(dismiss_button).to_have_text("×")
         dismiss_button.click()
-        expect(page.locator(".announcements-trigger__count")).to_have_text("0")
+        expect(page.locator(".announcements-trigger__count")).to_have_text("1")
 
         trigger.click()
-        expect(dialog.get_by_text("No new announcements.")).to_be_visible()
+        expect(dialog.get_by_role("heading", name="Read-only announcement")).to_be_visible()
         page.get_by_role("link", name="View announcement history").click()
         expect(page.get_by_role("heading", name="Announcement history")).to_be_visible()
         expect(page.get_by_role("heading", name="Test announcement")).to_be_visible()
