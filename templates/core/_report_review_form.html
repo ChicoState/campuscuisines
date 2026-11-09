@@ -1,9 +1,34 @@
-<form
-  method="post"
-  action="{% url 'report-review' review.pk %}"
-  class="report-form"
-  onsubmit="return window.confirm('Report this review?')"
->
-  {% csrf_token %}
-  <button type="submit" class="report-form__button">Report</button>
-</form>
+{% if user.is_authenticated %}
+  <div class="report-form">
+    <button
+      type="button"
+      class="report-form__button"
+      data-report-dialog-open
+      aria-haspopup="dialog"
+      aria-controls="report-dialog-{{ review.pk }}"
+    >Report</button>
+    <dialog
+      id="report-dialog-{{ review.pk }}"
+      class="review-dialog report-dialog"
+      aria-labelledby="report-dialog-title-{{ review.pk }}"
+    >
+      <div class="review-dialog__header">
+        <h2 id="report-dialog-title-{{ review.pk }}">Report this review?</h2>
+        <button
+          type="button"
+          class="dialog-close"
+          data-report-dialog-close
+          aria-label="Close report dialog"
+        >×</button>
+      </div>
+      <p>If this review violates our guidelines, you can report it for review.</p>
+      <form method="post" action="{% url 'report-review' review.pk %}" class="report-form__dialog-form">
+        {% csrf_token %}
+        <div class="report-form__actions">
+          <button type="button" data-report-dialog-cancel>Cancel</button>
+          <button type="submit">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+{% endif %}

@@ -614,6 +614,24 @@ button {
   border: 1px solid #cbd5d0;
 }
 
+.report-dialog {
+  width: min(100% - var(--space-8), 30rem);
+}
+
+.report-dialog p {
+  margin-block: var(--space-4);
+}
+
+.report-form__dialog-form {
+  margin-top: var(--space-4);
+}
+
+.report-form__actions {
+  display: flex;
+  justify-content: end;
+  gap: var(--space-3);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

@@ -103,7 +103,7 @@ def test_report_requires_csrf_token() -> None:
     assert not Report.objects.exists()
 
 
-def test_reviews_page_has_a_confirmed_report_form(client) -> None:
+def test_authenticated_reviews_page_has_a_report_dialog(client) -> None:
     review = create_review()
     client.force_login(create_user())
 
@@ -112,4 +112,17 @@ def test_reviews_page_has_a_confirmed_report_form(client) -> None:
     assert response.status_code == 200
     content = response.content.decode()
     assert reverse("report-review", args=[review.pk]) in content
-    assert "confirm(" in content
+    assert f'id="report-dialog-{review.pk}"' in content
+    assert "data-report-dialog-open" in content
+    assert "data-report-dialog-cancel" in content
+    assert "window.confirm" not in content
+
+
+@pytest.mark.parametrize("url_name", ["home", "reviews"])
+def test_anonymous_users_do_not_see_report_buttons(client, url_name: str) -> None:
+    create_review()
+
+    response = client.get(reverse(url_name))
+
+    assert response.status_code == 200
+    assert "report-form__button" not in response.content.decode()
