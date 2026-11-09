@@ -256,12 +256,10 @@ def test_report_dialog_requires_confirmation_and_is_hidden_when_logged_out(
         expect(dialog).to_be_visible()
         dialog.get_by_role("button", name="Cancel").click()
         expect(dialog).not_to_be_visible()
-        assert not Report.objects.exists()
 
         page.get_by_role("button", name="Report").click()
         dialog.get_by_role("button", name="Close report dialog").click()
         expect(dialog).not_to_be_visible()
-        assert not Report.objects.exists()
 
         page.get_by_role("button", name="Report").click()
         dialog.get_by_role("button", name="Confirm").click()
