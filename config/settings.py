@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "accounts",
+    "catalog",
     "core",
     "reviews",
 ]

@@ -11,6 +11,7 @@ from django.utils.crypto import get_random_string
 from playwright.sync_api import expect, sync_playwright
 
 from accounts.models import User
+from catalog.models import MenuItem
 from core.models import ImageAsset
 from reviews.models import Review, Tag, TagCategory
 
@@ -108,6 +109,7 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
     spicy = Tag.objects.create(  # type: ignore[reportAttributeAccessIssue]
         category=dietary_category, name="Spicy"
     )
+    menu_item = MenuItem.objects.create(name="Mushroom ramen")
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -148,6 +150,7 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         page.wait_for_load_state("networkidle")
         page.get_by_role("button", name="Make a review").click()
         page.get_by_label("Dish name").fill("Mushroom ramen")
+        expect(page.locator("#menu-item-suggestions option")).to_have_count(1)
         page.get_by_label("Your name").fill("Avery")
         expect(page.get_by_role("radio")).to_have_count(5)
         stars = page.locator(".rating-picker__star")
@@ -163,18 +166,32 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
         )
         expect(page.locator(".rating-picker__star--filled")).to_have_count(4)
         page.get_by_label("Your review").fill("Warm, savory, and excellent.")
-        tag_dropdown = page.locator(".tag-dropdown")
+        tag_dropdown = page.locator(".review-form .tag-dropdown")
         tag_dropdown.locator("summary").click()
-        vegetarian_tag = page.get_by_label("Vegetarian")
-        spicy_tag = page.get_by_label("Spicy")
+        vegetarian_tag = tag_dropdown.get_by_label("Vegetarian")
+        spicy_tag = tag_dropdown.get_by_label("Spicy")
         vegetarian_tag.check()
         spicy_tag.check()
-        expect(page.locator("[data-tags-summary]")).to_have_text("2 tags selected")
+        expect(tag_dropdown.locator("[data-tags-summary]")).to_have_text(
+            "2 tags selected"
+        )
         tag_dropdown.locator("summary").click()
         expect(tag_dropdown).not_to_have_attribute("open", "")
         tag_dropdown.locator("summary").click()
         expect(vegetarian_tag).to_be_checked()
         expect(spicy_tag).to_be_checked()
+        page.get_by_role("button", name="Close review form").click()
+        review_filter = page.locator(".review-filter__dropdown")
+        filter_box = review_filter.bounding_box()
+        filter_actions_box = page.locator(".review-filter__actions").bounding_box()
+        assert filter_box is not None
+        assert filter_actions_box is not None
+        assert filter_actions_box["y"] < filter_box["y"] + filter_box["height"]
+        expect(review_filter.locator("summary")).to_contain_text("0 tags selected")
+        review_filter.locator("summary").click()
+        expect(review_filter.get_by_label("Vegetarian")).to_be_visible()
+        review_filter.locator("summary").click()
+        page.get_by_role("button", name="Make a review").click()
         page.get_by_role("button", name="Publish review").click()
         expect(page.get_by_role("heading", name="Mushroom ramen")).to_be_visible()
         expect(page.locator(".review__rating")).to_contain_text("4 out of 5 stars")
@@ -187,6 +204,7 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
 
     review = Review.objects.get()  # type: ignore[reportAttributeAccessIssue]
     assert list(review.tags.all()) == [spicy, vegetarian]
+    assert review.menu_item == menu_item
 
 
 @pytest.mark.browser

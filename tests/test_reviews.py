@@ -2,6 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
+from catalog.models import MenuItem
 from reviews.forms import RATING_CHOICES, ReviewForm
 from reviews.models import Review, Tag, TagCategory
 
@@ -45,6 +46,40 @@ def test_review_form_saves_selected_tags() -> None:
     assert form.is_valid()
     review = form.save()
     assert list(review.tags.all()) == [contains_peanuts, vegetarian]
+
+
+def test_review_form_links_a_matching_menu_item() -> None:
+    menu_item = MenuItem.objects.create(name="Vegetarian pad thai")
+
+    form = ReviewForm(
+        data={
+            "dish_name": "vegetarian pad thai",
+            "reviewer_name": "Avery",
+            "rating": 5,
+            "text": "Great texture and flavor.",
+        }
+    )
+
+    assert form.is_valid()
+    review = form.save()
+
+    assert review.menu_item == menu_item
+
+
+def test_review_form_allows_a_dish_without_a_matching_menu_item() -> None:
+    form = ReviewForm(
+        data={
+            "dish_name": "Temporary chef special",
+            "reviewer_name": "Avery",
+            "rating": 5,
+            "text": "Great texture and flavor.",
+        }
+    )
+
+    assert form.is_valid()
+    review = form.save()
+
+    assert review.menu_item is None
 
 
 def test_review_form_rejects_unknown_tags() -> None:
