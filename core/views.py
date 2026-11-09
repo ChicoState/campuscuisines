@@ -3,6 +3,7 @@ from django.db import transaction
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from accounts.access import (
     eligible_login_required,
@@ -18,7 +19,7 @@ from reviews.filters import (
     get_selected_tag_ids,
 )
 from reviews.forms import ReviewForm
-from reviews.models import Review, ReviewImage
+from reviews.models import Report, Review, ReviewImage
 
 
 def home(request):
@@ -80,6 +81,14 @@ def about(request):
 
 def account(request):
     return render(request, "core/account.html")
+
+
+@eligible_login_required
+@require_POST
+def report_review(request, pk: int):
+    review = get_object_or_404(Review, pk=pk)
+    Report.objects.get_or_create(reporter=request.user, review=review)
+    return redirect("reviews")
 
 
 def _handle_review_submission(request, template_name="core/reviews.html"):

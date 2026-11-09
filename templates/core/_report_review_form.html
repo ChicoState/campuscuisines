@@ -1,0 +1,9 @@
+<form
+  method="post"
+  action="{% url 'report-review' review.pk %}"
+  class="report-form"
+  onsubmit="return window.confirm('Report this review?')"
+>
+  {% csrf_token %}
+  <button type="submit" class="report-form__button">Report</button>
+</form>

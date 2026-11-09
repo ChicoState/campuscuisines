@@ -160,6 +160,7 @@
               {% endif %}
             {% endwith %}
             <time datetime="{{ review.created_at|date:'c' }}">{{ review.created_at|date:"F j, Y, g:i a T" }}</time>
+            {% include "core/_report_review_form.html" %}
           </li>
         {% endfor %}
       </ol>

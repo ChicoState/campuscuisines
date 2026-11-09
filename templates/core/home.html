@@ -34,6 +34,7 @@
               <p class="review__rating">{{ review.rating }} out of 5 stars</p>
             </div>
             <p class="review__text">{{ review.text|linebreaksbr }}</p>
+            {% include "core/_report_review_form.html" %}
           </li>
         {% endfor %}
       </ol>

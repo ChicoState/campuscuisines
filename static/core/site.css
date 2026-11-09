@@ -604,6 +604,16 @@ button {
   font-size: 0.875rem;
 }
 
+.report-form {
+  margin-top: var(--space-4);
+}
+
+.report-form__button {
+  color: var(--color-muted);
+  background: transparent;
+  border: 1px solid #cbd5d0;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
