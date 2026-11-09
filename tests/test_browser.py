@@ -264,7 +264,7 @@ def test_report_dialog_requires_confirmation_and_is_hidden_when_logged_out(
         page.get_by_role("button", name="Report").click()
         dialog.get_by_role("button", name="Confirm").click()
         page.wait_for_load_state("networkidle")
-        expect(page.get_by_role("heading", name="Reviews")).to_be_visible()
+        expect(page.get_by_role("heading", name="Reviews", exact=True)).to_be_visible()
         context.close()
         browser.close()
 
