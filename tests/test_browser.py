@@ -13,7 +13,7 @@ from playwright.sync_api import expect, sync_playwright
 from accounts.models import User
 from catalog.models import MenuItem
 from core.models import ImageAsset
-from reviews.models import Review, Tag, TagCategory
+from reviews.models import Report, Review, Tag, TagCategory
 
 TEST_STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
@@ -205,6 +205,70 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
     review = Review.objects.get()  # type: ignore[reportAttributeAccessIssue]
     assert list(review.tags.all()) == [spicy, vegetarian]
     assert review.menu_item == menu_item
+
+
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
+def test_report_dialog_requires_confirmation_and_is_hidden_when_logged_out(
+    live_server, client
+) -> None:
+    review = Review.objects.create(
+        dish_name="Mushroom ramen",
+        reviewer_name="Avery",
+        rating=4,
+        text="Warm, savory, and excellent.",
+    )
+    user = User.objects.create_user(
+        username="report-browser-student",
+        email="report-browser-student@csuchico.edu",
+        password="unused",
+    )
+    client.force_login(user)
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        anonymous_page = browser.new_page()
+        anonymous_page.goto(live_server.url, wait_until="networkidle")
+        expect(anonymous_page.get_by_role("button", name="Report")).to_have_count(0)
+        anonymous_page.get_by_role("link", name="Reviews", exact=True).click()
+        anonymous_page.wait_for_load_state("networkidle")
+        expect(anonymous_page.get_by_role("button", name="Report")).to_have_count(0)
+        anonymous_page.close()
+
+        context = browser.new_context()
+        context.add_cookies(
+            [
+                {
+                    "name": "sessionid",
+                    "value": client.cookies["sessionid"].value,
+                    "url": live_server.url,
+                }
+            ]
+        )
+        page = context.new_page()
+        page.goto(live_server.url, wait_until="networkidle")
+        page.get_by_role("button", name="Report").click()
+        dialog = page.get_by_role("dialog", name="Report this review?")
+        expect(dialog).to_be_visible()
+        dialog.get_by_role("button", name="Cancel").click()
+        expect(dialog).not_to_be_visible()
+
+        page.get_by_role("button", name="Report").click()
+        dialog.get_by_role("button", name="Close report dialog").click()
+        expect(dialog).not_to_be_visible()
+
+        page.get_by_role("button", name="Report").click()
+        dialog.get_by_role("button", name="Confirm").click()
+        page.wait_for_load_state("networkidle")
+        expect(page.get_by_role("heading", name="Reviews", exact=True)).to_be_visible()
+        context.close()
+        browser.close()
+
+    assert Report.objects.filter(reporter=user, review=review).count() == 1
 
 
 @pytest.mark.browser

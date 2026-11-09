@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import Review, ReviewImage
+from .models import Report, Review, ReviewImage
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ("review", "reporter", "created_at")
+    list_select_related = ("review", "reporter")
+    search_fields = ("review__dish_name", "reporter__email")
+    ordering = ("-created_at", "-id")
 
 
 @admin.register(Review)

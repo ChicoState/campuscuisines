@@ -160,6 +160,7 @@
               {% endif %}
             {% endwith %}
             <time datetime="{{ review.created_at|date:'c' }}">{{ review.created_at|date:"F j, Y, g:i a T" }}</time>
+            {% include "core/_report_review_form.html" %}
           </li>
         {% endfor %}
       </ol>
@@ -173,4 +174,5 @@
   <script src="{% static 'core/rating-picker.js' %}"></script>
   <script src="{% static 'core/tag-dropdown.js' %}"></script>
   <script src="{% static 'core/review-dialog.js' %}"></script>
+  <script src="{% static 'core/report-dialog.js' %}"></script>
 {% endblock %}

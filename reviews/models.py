@@ -1,12 +1,13 @@
 from typing import cast
 
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from catalog.models import Tag, TagCategory
 from core.models import ImageAsset
 
-__all__ = ["Review", "ReviewImage", "Tag", "TagCategory"]
+__all__ = ["Report", "Review", "ReviewImage", "Tag", "TagCategory"]
 
 
 class Review(models.Model):
@@ -62,4 +63,28 @@ class ReviewImage(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["review"], name="one_image_per_review")
+        ]
+
+
+class Report(models.Model):
+    objects: models.Manager
+
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="review_reports",
+    )
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["reporter", "review"],
+                name="one_report_per_user_review",
+            )
         ]
