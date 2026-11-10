@@ -16,6 +16,7 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 - `templates/account/`, `static/account/`: reusable Google sign-in content and dialog assets; preserve the standalone sign-in page for protected redirects and no-JavaScript access.
 - `core/management/commands/purge_deleted_images.py`: manual cleanup of image records and objects soft-deleted for more than 30 days.
 - `reviews/`: public dish-review model, form, explicit review-image association, admin registration, and migrations.
+- `announcements/`: database-backed announcements, per-user/session dismissals, history page, and admin registration.
 - `docs/`: living specifications and approved implementation plans, including
   `dish-reviews-plan.md`, `image-upload-plan.md`, `google-accounts-plan.md`,
   `navigation-pages-plan.md`, and storage-lifecycle decisions.

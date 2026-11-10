@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "accounts",
     "catalog",
+    "announcements",
     "core",
     "reviews",
 ]
@@ -72,6 +73,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.navigation",
+                "announcements.context_processors.announcement_panel",
             ]
         },
     }

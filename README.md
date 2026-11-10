@@ -23,6 +23,7 @@ publish reviews or upload images.
 | `config/` | Django settings, routes, and WSGI/ASGI entry points |
 | `accounts/` | Google-only account journey, eligibility adapter, custom user model, and migrations |
 | `core/`, `templates/`, `static/` | Public homepage, reusable image-asset workflow, templates, and browser assets |
+| `announcements/` | Database-backed announcement panel, dismissal persistence, history page, and admin registration |
 | `reviews/` | Public dish-review model, form, explicit image association, admin registration, and migrations |
 | `docs/` | Living implementation specifications, plans, and architecture decisions, including the [navigation pages plan](docs/navigation-pages-plan.md) and [dish reviews MVP plan](docs/dish-reviews-plan.md) |
 
@@ -245,6 +246,14 @@ and clear `is_staff` when access ends. Staff can administer only models for whic
 they have permissions. Managing user accounts is reserved for eligible superusers,
 even when another staff member has `accounts` model permissions. Do not grant
 `is_superuser` for routine moderation or enable a public password login route.
+## Announcements
+
+The shared header includes a database-backed announcement panel with a count badge.
+Users can dismiss announcements; authenticated dismissals persist per account and
+anonymous dismissals persist per browser session. The save control is currently a
+visual placeholder and does not persist state. `/announcements/history/` lists all
+active and archived announcements. Manage announcement content and active state in
+Django admin.
 
 ## Dish reviews MVP
 
