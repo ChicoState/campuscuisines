@@ -293,7 +293,9 @@ def test_announcement_can_be_dismissed_from_the_heading(
         expect(page.locator(".announcements-trigger__count")).to_have_text("1")
 
         trigger.click()
-        expect(dialog.get_by_role("heading", name="Read-only announcement")).to_be_visible()
+        expect(
+            dialog.get_by_role("heading", name="Read-only announcement")
+        ).to_be_visible()
         page.get_by_role("link", name="View announcement history").click()
         expect(page.get_by_role("heading", name="Announcement history")).to_be_visible()
         expect(page.get_by_role("heading", name="Test announcement")).to_be_visible()
