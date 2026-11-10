@@ -29,6 +29,12 @@ ONE_PIXEL_PNG = base64.b64decode(
 
 @pytest.fixture
 def test_announcement() -> Announcement:
+    Announcement.objects.create(
+        title="Read-only announcement",
+        author_name="Admin",
+        body="This announcement must remain visible.",
+        is_dismissable=False,
+    )
     return Announcement.objects.create(
         title="Test announcement",
         author_name="Admin",
@@ -245,7 +251,7 @@ def test_announcement_modal_opens_and_closes_without_navigation(
         dialog = page.get_by_role("dialog", name="Announcements")
         expect(dialog).to_be_visible()
         expect(dialog.get_by_role("heading", name="Test announcement")).to_be_visible()
-        expect(dialog.get_by_text("Posted by Admin")).to_be_visible()
+        expect(dialog.get_by_text("Posted by Admin")).to_have_count(2)
         expect(dialog.locator("[data-announcement-item]")).to_have_count(2)
         assert page.url == starting_url
 
