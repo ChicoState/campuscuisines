@@ -5,7 +5,8 @@ from django.db import IntegrityError
 from django.urls import reverse
 
 from accounts.models import User
-from reviews.models import Report, Review
+from core.models import ImageAsset
+from reviews.models import Report, Review, ReviewImage
 
 pytestmark = pytest.mark.django_db
 
@@ -25,21 +26,38 @@ def create_user(email: str = "student@csuchico.edu") -> User:
     )
 
 
-def test_report_stores_reporter_and_review() -> None:
-    report = Report(reporter=create_user(), review=create_review())
+def test_report_stores_typed_target_and_reason() -> None:
+    report = Report(
+        reporter=create_user(),
+        review=create_review(),
+        report_type=Report.REPORT_TYPE_REVIEW,
+        reason=Report.REASON_SPAM,
+    )
 
     report.full_clean()
     assert cast(User, report.reporter).email == "student@csuchico.edu"
     assert cast(Review, report.review).dish_name == "Mushroom ramen"
+    assert report.report_type == Report.REPORT_TYPE_REVIEW
+    assert report.reason == Report.REASON_SPAM
 
 
 def test_report_database_constraint_prevents_duplicate_reporter_review_pair() -> None:
     reporter = create_user()
     review = create_review()
-    Report.objects.create(reporter=reporter, review=review)
+    Report.objects.create(
+        reporter=reporter,
+        review=review,
+        report_type=Report.REPORT_TYPE_REVIEW,
+        reason=Report.REASON_SPAM,
+    )
 
     with pytest.raises(IntegrityError):
-        Report.objects.create(reporter=reporter, review=review)
+        Report.objects.create(
+            reporter=reporter,
+            review=review,
+            report_type=Report.REPORT_TYPE_REVIEW,
+            reason=Report.REASON_OFFENSIVE,
+        )
 
 
 def test_authenticated_user_can_report_a_review(client) -> None:
@@ -47,13 +65,78 @@ def test_authenticated_user_can_report_a_review(client) -> None:
     review = create_review()
     client.force_login(reporter)
 
-    response = client.post(reverse("report-review", args=[review.pk]))
+    response = client.post(
+        reverse("report-review", args=[review.pk]),
+        {"report_type": "review", "reason": "spam"},
+    )
 
     assert response.status_code == 302
     assert response.url == reverse("reviews")
     report = Report.objects.get()
     assert report.reporter == reporter
     assert report.review == review
+    assert report.reason == Report.REASON_SPAM
+
+
+@pytest.mark.parametrize("report_type", ["image", "account"])
+def test_authenticated_user_can_report_image_or_image_uploader(
+    client, report_type: str
+) -> None:
+    reporter = create_user("reporter@csuchico.edu")
+    owner = create_user("owner@csuchico.edu")
+    review = create_review()
+    image = ImageAsset.objects.create(
+        file="images/review.png",
+        alt_text="Review image",
+        published_at="2026-01-01T00:00:00Z",
+        uploaded_by=owner,
+    )
+    ReviewImage.objects.create(review=review, image=image)
+    client.force_login(reporter)
+
+    response = client.post(
+        reverse("report-review", args=[review.pk]),
+        {"report_type": report_type, "reason": "inappropriate"},
+    )
+
+    assert response.status_code == 302
+    report = Report.objects.get()
+    assert report.report_type == report_type
+    assert (
+        report.image_id == image.pk
+        if report_type == "image"
+        else report.account_id == owner.pk
+    )
+
+
+@pytest.mark.parametrize("report_type", ["image", "account"])
+def test_duplicate_image_or_account_report_is_handled(client, report_type: str) -> None:
+    reporter = create_user("reporter@csuchico.edu")
+    owner = create_user("owner@csuchico.edu")
+    review = create_review()
+    image = ImageAsset.objects.create(
+        file="images/review.png",
+        alt_text="Review image",
+        published_at="2026-01-01T00:00:00Z",
+        uploaded_by=owner,
+    )
+    ReviewImage.objects.create(review=review, image=image)
+    target = {"image": image} if report_type == "image" else {"account": owner}
+    Report.objects.create(
+        reporter=reporter,
+        report_type=report_type,
+        reason=Report.REASON_SPAM,
+        **target,
+    )
+    client.force_login(reporter)
+
+    response = client.post(
+        reverse("report-review", args=[review.pk]),
+        {"report_type": report_type, "reason": "spam"},
+    )
+
+    assert response.status_code == 302
+    assert Report.objects.count() == 1
 
 
 def test_anonymous_user_cannot_report_a_review(client) -> None:
@@ -69,10 +152,18 @@ def test_anonymous_user_cannot_report_a_review(client) -> None:
 def test_duplicate_report_is_handled_without_creating_another_report(client) -> None:
     reporter = create_user()
     review = create_review()
-    Report.objects.create(reporter=reporter, review=review)
+    Report.objects.create(
+        reporter=reporter,
+        review=review,
+        report_type=Report.REPORT_TYPE_REVIEW,
+        reason=Report.REASON_SPAM,
+    )
     client.force_login(reporter)
 
-    response = client.post(reverse("report-review", args=[review.pk]))
+    response = client.post(
+        reverse("report-review", args=[review.pk]),
+        {"report_type": "review", "reason": "spam"},
+    )
 
     assert response.status_code == 302
     assert Report.objects.count() == 1
@@ -97,7 +188,10 @@ def test_report_requires_csrf_token() -> None:
     csrf_client = Client(enforce_csrf_checks=True)
     csrf_client.force_login(reporter)
 
-    response = csrf_client.post(reverse("report-review", args=[review.pk]))
+    response = csrf_client.post(
+        reverse("report-review", args=[review.pk]),
+        {"report_type": "review", "reason": "spam"},
+    )
 
     assert response.status_code == 403  # type: ignore[reportAttributeAccessIssue]
     assert not Report.objects.exists()
@@ -116,6 +210,47 @@ def test_authenticated_reviews_page_has_a_report_dialog(client) -> None:
     assert "data-report-dialog-open" in content
     assert "data-report-dialog-cancel" in content
     assert "window.confirm" not in content
+    assert 'value="review"' in content
+    assert "Spam/scam" in content
+    assert "data-report-other" in content
+
+
+@pytest.mark.parametrize(
+    ("payload", "field"),
+    [
+        ({"report_type": "review"}, "reason"),
+        ({"report_type": "review", "reason": "other"}, "custom_reason"),
+    ],
+)
+def test_report_requires_reason_and_other_text(
+    client, payload: dict, field: str
+) -> None:
+    reporter = create_user()
+    review = create_review()
+    client.force_login(reporter)
+
+    response = client.post(reverse("report-review", args=[review.pk]), payload)
+
+    assert response.status_code == 302
+    assert not Report.objects.exists()
+
+
+def test_report_rejects_custom_text_for_predefined_reason(client) -> None:
+    reporter = create_user()
+    review = create_review()
+    client.force_login(reporter)
+
+    response = client.post(
+        reverse("report-review", args=[review.pk]),
+        {
+            "report_type": "review",
+            "reason": "spam",
+            "custom_reason": "This should not be accepted.",
+        },
+    )
+
+    assert response.status_code == 302
+    assert not Report.objects.exists()
 
 
 @pytest.mark.parametrize("url_name", ["home", "reviews"])

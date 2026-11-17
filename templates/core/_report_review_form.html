@@ -21,9 +21,39 @@
           aria-label="Close report dialog"
         >×</button>
       </div>
-      <p>If this review violates our guidelines, you can report it for review.</p>
+      <p>If this content violates our guidelines, you can report it for review.</p>
       <form method="post" action="{% url 'report-review' review.pk %}" class="report-form__dialog-form">
         {% csrf_token %}
+        <fieldset class="form-field report-form__types">
+          <legend>Report type</legend>
+          <div class="report-form__type-options" role="radiogroup" aria-label="Report type">
+            <label class="report-form__type-option report-form__type-option--selected">
+              <input type="radio" name="report_type" value="review" checked>
+              <span>Review</span>
+            </label>
+            <label class="report-form__type-option{% if not review.published_images %} report-form__type-option--disabled{% endif %}">
+              <input type="radio" name="report_type" value="image"{% if not review.published_images %} disabled{% endif %}>
+              <span>Image</span>
+            </label>
+            {% with review_image=review.published_images.0 %}
+              <label class="report-form__type-option{% if not review_image or not review_image.image.uploaded_by %} report-form__type-option--disabled{% endif %}">
+                <input type="radio" name="report_type" value="account"{% if not review_image or not review_image.image.uploaded_by %} disabled{% endif %}>
+                <span>Account</span>
+              </label>
+            {% endwith %}
+          </div>
+        </fieldset>
+        <fieldset class="form-field report-form__reasons">
+          <legend>Reason</legend>
+          <label><input type="radio" name="reason" value="spam" required> Spam/scam</label>
+          <label><input type="radio" name="reason" value="inappropriate" required> Inappropriate</label>
+          <label><input type="radio" name="reason" value="offensive" required> Offensive</label>
+          <label><input type="radio" name="reason" value="other" required data-report-other> Other</label>
+        </fieldset>
+        <div class="form-field report-form__custom-reason" data-report-custom-reason-container hidden>
+          <label for="report-custom-reason-{{ review.pk }}">Custom reason</label>
+          <input id="report-custom-reason-{{ review.pk }}" name="custom_reason" type="text" maxlength="500" data-report-custom-reason disabled>
+        </div>
         <div class="report-form__actions">
           <button type="button" data-report-dialog-cancel>Cancel</button>
           <button type="submit">Confirm</button>

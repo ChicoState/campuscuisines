@@ -328,6 +328,10 @@ h1 {
   border: 0;
 }
 
+.form-field[hidden] {
+  display: none;
+}
+
 .form-field label,
 .form-field legend {
   font-weight: 700;
@@ -620,6 +624,51 @@ button {
 
 .report-dialog p {
   margin-block: var(--space-4);
+}
+
+.report-form__type-options {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.report-form__type-option {
+  border: 1px solid #cbd5d0;
+  border-radius: 0.25rem;
+  background: white;
+  color: var(--color-ink);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+}
+
+.report-form__type-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.report-form__type-option--selected {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: white;
+}
+
+.report-form__type-option--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.report-form__reasons label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 400;
+}
+
+.report-form__custom-reason input {
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid #9fb3c8;
+  border-radius: 0.25rem;
+  font: inherit;
 }
 
 .report-form__dialog-form {
