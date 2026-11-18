@@ -5,7 +5,7 @@ from catalog.filters import get_tag_groups
 from catalog.models import MenuItem, Tag
 from core.validators import validate_raster_image
 
-from .models import Review
+from .models import Report, Review
 
 RATING_CHOICES = [
     (1, "1 out of 5 stars — Bad"),
@@ -91,3 +91,37 @@ class ReviewForm(forms.ModelForm):
             "text": "Your review",
             "tags": "Applicable tags",
         }
+
+
+class ReportForm(forms.ModelForm):
+    report_type = forms.ChoiceField(
+        choices=Report.REPORT_TYPE_CHOICES,
+        widget=forms.RadioSelect,
+        initial=Report.REPORT_TYPE_REVIEW,
+    )
+    reason = forms.ChoiceField(
+        choices=Report.REASON_CHOICES,
+        widget=forms.RadioSelect,
+        required=True,
+    )
+
+    class Meta:
+        model = Report
+        fields = ["report_type", "reason", "custom_reason"]
+        widgets = {
+            "custom_reason": forms.TextInput(
+                attrs={"autocomplete": "off", "data-report-custom-reason": ""}
+            )
+        }
+        labels = {"custom_reason": "Custom reason"}
+
+    def clean_custom_reason(self):
+        return self.cleaned_data.get("custom_reason", "").strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("reason") == Report.REASON_OTHER and not cleaned_data.get(
+            "custom_reason"
+        ):
+            self.add_error("custom_reason", "Enter a custom reason.")
+        return cleaned_data

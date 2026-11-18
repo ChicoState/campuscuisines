@@ -11,9 +11,10 @@ from django.utils.crypto import get_random_string
 from playwright.sync_api import expect, sync_playwright
 
 from accounts.models import User
+from announcements.models import Announcement
 from catalog.models import MenuItem
 from core.models import ImageAsset
-from reviews.models import Review, Tag, TagCategory
+from reviews.models import Report, Review, Tag, TagCategory
 
 TEST_STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
@@ -24,6 +25,21 @@ ONE_PIXEL_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4f50BAASvAdfA"
     "0BA+AAAAAElFTkSuQmCC"
 )
+
+
+@pytest.fixture
+def test_announcement() -> Announcement:
+    Announcement.objects.create(
+        title="Read-only announcement",
+        author_name="Admin",
+        body="This announcement must remain visible.",
+        is_dismissable=False,
+    )
+    return Announcement.objects.create(
+        title="Test announcement",
+        author_name="Admin",
+        body="This is a test announcement.",
+    )
 
 
 @pytest.mark.browser
@@ -205,6 +221,179 @@ def test_homepage_renders_in_chromium(live_server, client) -> None:
     review = Review.objects.get()  # type: ignore[reportAttributeAccessIssue]
     assert list(review.tags.all()) == [spicy, vegetarian]
     assert review.menu_item == menu_item
+
+
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
+def test_announcement_modal_opens_and_closes_without_navigation(
+    live_server, test_announcement
+) -> None:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page(viewport={"width": 320, "height": 720})
+        console_errors: list[str] = []
+        page.on(
+            "console",
+            lambda message: (
+                console_errors.append(message.text) if message.type == "error" else None
+            ),
+        )
+        page.goto(live_server.url, wait_until="networkidle")
+        starting_url = page.url
+
+        trigger = page.get_by_role("button", name="Announcements")
+        trigger.click()
+
+        dialog = page.get_by_role("dialog", name="Announcements")
+        expect(dialog).to_be_visible()
+        expect(dialog.get_by_role("heading", name="Test announcement")).to_be_visible()
+        expect(dialog.get_by_text("Posted by Admin")).to_have_count(2)
+        expect(dialog.locator("[data-announcement-item]")).to_have_count(2)
+        assert page.url == starting_url
+
+        dialog.get_by_role("button", name="Close announcements").click()
+        expect(dialog).to_be_hidden()
+        expect(trigger).to_be_focused()
+
+        trigger.click()
+        page.keyboard.press("Escape")
+        expect(dialog).to_be_hidden()
+        expect(trigger).to_be_focused()
+
+        trigger.click()
+        page.mouse.click(4, 4)
+        expect(dialog).to_be_hidden()
+        expect(trigger).to_be_focused()
+
+        assert page.url == starting_url
+        assert not console_errors
+        browser.close()
+
+
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
+def test_announcement_can_be_dismissed_from_the_heading(
+    live_server, test_announcement
+) -> None:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page()
+        page.goto(live_server.url, wait_until="networkidle")
+
+        trigger = page.get_by_role("button", name="Announcements")
+        trigger.click()
+        dialog = page.get_by_role("dialog", name="Announcements")
+        expect(dialog.get_by_role("heading", name="Test announcement")).to_be_visible()
+
+        dismiss_button = dialog.get_by_role("button", name="Dismiss Test announcement")
+        expect(dismiss_button).to_have_text("×")
+        dismiss_button.click()
+        expect(page.locator(".announcements-trigger__count")).to_have_text("1")
+
+        trigger.click()
+        expect(
+            dialog.get_by_role("heading", name="Read-only announcement")
+        ).to_be_visible()
+        page.get_by_role("link", name="View announcement history").click()
+        expect(page.get_by_role("heading", name="Announcement history")).to_be_visible()
+        expect(page.get_by_role("heading", name="Test announcement")).to_be_visible()
+        browser.close()
+
+
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
+def test_report_dialog_requires_confirmation_and_is_hidden_when_logged_out(
+    live_server, client
+) -> None:
+    review = Review.objects.create(
+        dish_name="Mushroom ramen",
+        reviewer_name="Avery",
+        rating=4,
+        text="Warm, savory, and excellent.",
+    )
+    user = User.objects.create_user(
+        username="report-browser-student",
+        email="report-browser-student@csuchico.edu",
+        password="unused",
+    )
+    client.force_login(user)
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        anonymous_page = browser.new_page()
+        anonymous_page.goto(live_server.url, wait_until="networkidle")
+        expect(anonymous_page.get_by_role("button", name="Report")).to_have_count(0)
+        anonymous_page.get_by_role("link", name="Reviews", exact=True).click()
+        anonymous_page.wait_for_load_state("networkidle")
+        expect(anonymous_page.get_by_role("button", name="Report")).to_have_count(0)
+        anonymous_page.close()
+
+        context = browser.new_context()
+        context.add_cookies(
+            [
+                {
+                    "name": "sessionid",
+                    "value": client.cookies["sessionid"].value,
+                    "url": live_server.url,
+                }
+            ]
+        )
+        page = context.new_page()
+        page.goto(live_server.url, wait_until="networkidle")
+        page.get_by_role("button", name="Report").click()
+        dialog = page.get_by_role("dialog", name="Report this review?")
+        expect(dialog).to_be_visible()
+        expect(dialog.get_by_role("radio", name="Review")).to_be_checked()
+        expect(dialog.get_by_role("radio", name="Image")).to_have_count(1)
+        expect(dialog.get_by_role("radio", name="Account")).to_have_count(1)
+        expect(dialog.get_by_role("radio", name="Spam/scam")).not_to_be_checked()
+        expect(dialog.locator("[data-report-custom-reason-container]")).to_be_hidden()
+        expect(dialog.get_by_label("Custom reason")).to_be_hidden()
+        expect(dialog.get_by_label("Custom reason")).to_be_disabled()
+        dialog.get_by_role("button", name="Cancel").click()
+        expect(dialog).not_to_be_visible()
+
+        page.get_by_role("button", name="Report").click()
+        dialog.get_by_role("button", name="Close report dialog").click()
+        expect(dialog).not_to_be_visible()
+
+        page.get_by_role("button", name="Report").click()
+        dialog.get_by_role("radio", name="Other").check()
+        expect(dialog.locator("[data-report-custom-reason-container]")).to_be_visible()
+        expect(dialog.get_by_label("Custom reason")).to_be_visible()
+        expect(dialog.get_by_label("Custom reason")).to_have_attribute("required", "")
+        expect(dialog.get_by_label("Custom reason")).not_to_be_disabled()
+        dialog.get_by_role("radio", name="Spam/scam").check()
+        expect(dialog.locator("[data-report-custom-reason-container]")).to_be_hidden()
+        expect(dialog.get_by_label("Custom reason")).to_be_hidden()
+        expect(dialog.get_by_label("Custom reason")).to_be_disabled()
+        expect(dialog.get_by_label("Custom reason")).not_to_have_attribute(
+            "required", ""
+        )
+        dialog.get_by_role("radio", name="Other").check()
+        expect(dialog.locator("[data-report-custom-reason-container]")).to_be_visible()
+        expect(dialog.get_by_label("Custom reason")).to_be_visible()
+        expect(dialog.get_by_label("Custom reason")).to_have_attribute("required", "")
+        dialog.get_by_label("Custom reason").fill("A custom browser reason")
+        dialog.get_by_role("button", name="Confirm").click()
+        page.wait_for_load_state("networkidle")
+        expect(page.get_by_role("heading", name="Reviews", exact=True)).to_be_visible()
+        context.close()
+        browser.close()
+
+    assert Report.objects.filter(reporter=user, review=review).count() == 1
 
 
 @pytest.mark.browser

@@ -1,8 +1,9 @@
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from accounts.access import (
     eligible_login_required,
@@ -18,8 +19,8 @@ from reviews.filters import (
     filter_reviews_by_selected_tag_ids,
     get_selected_tag_ids,
 )
-from reviews.forms import ReviewForm
-from reviews.models import Review, ReviewImage
+from reviews.forms import ReportForm, ReviewForm
+from reviews.models import Report, Review, ReviewImage
 
 
 def home(request):
@@ -102,6 +103,53 @@ def account(request):
     return render(request, "core/account.html")
 
 
+@eligible_login_required
+@require_POST
+def report_review(request, pk: int):
+    review = get_object_or_404(Review, pk=pk)
+    form = ReportForm(request.POST)
+    if not form.is_valid():
+        return redirect("reviews")
+
+    report_type = form.cleaned_data["report_type"]
+    target = {
+        Report.REPORT_TYPE_REVIEW: {"review": review},
+        Report.REPORT_TYPE_IMAGE: {},
+        Report.REPORT_TYPE_ACCOUNT: {},
+    }[report_type]
+    review_image = (
+        ReviewImage.objects.select_related("image__uploaded_by")
+        .filter(
+            review=review,
+            image__deleted_at__isnull=True,
+            image__published_at__isnull=False,
+        )
+        .first()
+    )
+    if report_type == Report.REPORT_TYPE_IMAGE:
+        if review_image is None:
+            return redirect("reviews")
+        target = {"image": review_image.image}
+    elif report_type == Report.REPORT_TYPE_ACCOUNT:
+        if review_image is None or review_image.image.uploaded_by is None:
+            return redirect("reviews")
+        target = {"account": review_image.image.uploaded_by}
+
+    report = Report(
+        reporter=request.user,
+        report_type=report_type,
+        reason=form.cleaned_data["reason"],
+        custom_reason=form.cleaned_data["custom_reason"],
+        **target,
+    )
+    try:
+        with transaction.atomic():  # type: ignore[reportGeneralTypeIssues]
+            report.save()
+    except IntegrityError:
+        pass
+    return redirect("reviews")
+
+
 def _handle_review_submission(request, template_name="core/reviews.html"):
     form = ReviewForm(request.POST, request.FILES, allow_image_upload=settings.DEBUG)
     if form.is_valid():
@@ -136,7 +184,7 @@ def _handle_review_submission(request, template_name="core/reviews.html"):
 def _reviews_with_images(selected_review_tag_ids: set[int] | None = None):
     review_images = Prefetch(
         "image_links",
-        queryset=ReviewImage.objects.select_related("image").filter(
+        queryset=ReviewImage.objects.select_related("image__uploaded_by").filter(
             image__deleted_at__isnull=True,
             image__published_at__isnull=False,
         ),
