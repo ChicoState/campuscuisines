@@ -306,6 +306,8 @@ def test_announcement_can_be_dismissed_from_the_heading(
         expect(page.get_by_role("heading", name="Announcement history")).to_be_visible()
         expect(page.get_by_role("heading", name="Test announcement")).to_be_visible()
         browser.close()
+
+
 def test_report_dialog_requires_confirmation_and_is_hidden_when_logged_out(
     live_server, client
 ) -> None:
