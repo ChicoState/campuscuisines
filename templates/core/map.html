@@ -3,9 +3,42 @@
 {% block title %}Menu | Campus Cuisines{% endblock %}
 
 {% block content %}
-  <section class="page-section placeholder-section" aria-labelledby="menu-heading">
+  <section class="page-section" aria-labelledby="menu-heading">
     <p class="eyebrow">Find your next meal</p>
     <h1 id="menu-heading">Menu</h1>
-    <p class="intro">The campus menu is coming soon.</p>
+    {% if menu_items %}
+      <ol class="review-list" aria-label="Currently available menu items">
+        {% for menu_item in menu_items %}
+          <li class="review">
+            <h2>{{ menu_item.display_name }}</h2>
+            {% if menu_item.display_description %}<p>{{ menu_item.display_description }}</p>{% endif %}
+            <p class="form-help">Available {{ menu_item.available_from|time:"g:i A" }}–{{ menu_item.available_until|time:"g:i A" }}</p>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="intro">No menu items are available right now.</p>
+    {% endif %}
+  </section>
+
+  <section class="page-section" aria-labelledby="food-item-heading">
+    <p class="eyebrow">Help grow the catalog</p>
+    <h2 id="food-item-heading">Suggest a food item</h2>
+    {% if user.is_authenticated %}
+      <form method="post" class="review-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+          <div class="form-field">
+            {{ field.label_tag }}
+            {{ field }}
+            {{ field.errors }}
+          </div>
+        {% endfor %}
+        <button type="submit">Submit food item</button>
+      </form>
+    {% else %}
+      <p class="intro">Sign in with your campus account to suggest a food item.</p>
+    {% endif %}
   </section>
 {% endblock %}

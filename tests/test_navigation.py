@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
+from catalog.models import FoodItem
 from core.models import ImageAsset
 from reviews.models import Review, Tag, TagCategory
 
@@ -137,10 +138,50 @@ def test_images_page_omits_deleted_images_and_shows_empty_state(client) -> None:
 
 
 @pytest.mark.django_db
-def test_menu_page_is_an_explicit_placeholder(client) -> None:
+def test_menu_page_shows_current_menu_empty_state(client) -> None:
     response = client.get(reverse("map"))
 
-    assert "The campus menu is coming soon." in response.content.decode()
+    assert "No menu items are available right now." in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_eligible_user_can_submit_a_food_item_from_menu(client) -> None:
+    user = User.objects.create_user(
+        username="menu-contributor",
+        email="menu-contributor@csuchico.edu",
+        password="unused",
+    )
+    client.force_login(user)
+
+    response = client.post(
+        reverse("menu"),
+        {
+            "name": "Coconut curry",
+            "description": "A bright vegetable curry.",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.url == reverse("menu")
+    food_item = FoodItem.objects.get()
+    assert food_item.name == "Coconut curry"
+    assert food_item.submitted_by == user
+
+
+@pytest.mark.django_db
+def test_ineligible_user_cannot_submit_a_food_item(client) -> None:
+    user = User.objects.create_user(
+        username="external-contributor",
+        email="external-contributor@example.com",
+        password="unused",
+    )
+    client.force_login(user)
+
+    response = client.post(reverse("menu"), {"name": "Unauthorized dish"})
+
+    assert response.status_code == 302
+    assert response.url.startswith(reverse("account-login"))
+    assert not FoodItem.objects.exists()
 
 
 @pytest.mark.django_db
