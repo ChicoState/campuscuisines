@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import MenuItem, Tag, TagCategory
+from .models import FoodItem, MenuItem, Tag, TagCategory
+
+
+@admin.register(FoodItem)
+class FoodItemAdmin(admin.ModelAdmin):
+    list_display = ("name", "submitted_by", "created_at")
+    search_fields = ("name", "description")
+    filter_horizontal = ("tags",)
+    list_select_related = ("submitted_by",)
 
 
 @admin.register(TagCategory)
@@ -18,6 +26,14 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(MenuItem)
 class MenuItemAdmin(admin.ModelAdmin):
-    list_display = ("name",)
-    search_fields = ("name", "description")
+    list_display = (
+        "food_item",
+        "weekday",
+        "available_from",
+        "available_until",
+        "is_active",
+    )
+    list_filter = ("weekday", "is_active")
+    search_fields = ("food_item__name", "name")
+    autocomplete_fields = ("food_item",)
     filter_horizontal = ("tags",)

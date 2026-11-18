@@ -13,8 +13,8 @@ NAVIGATION_ITEMS = (
     },
     {
         "label": "Menu",
-        "url_name": "map",
-        "active_url_names": ("map",),
+        "url_name": "menu",
+        "active_url_names": ("map", "menu"),
     },
     {
         "label": "About Us",

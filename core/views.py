@@ -10,6 +10,7 @@ from accounts.access import (
     is_eligible_user,
     redirect_to_eligible_login,
 )
+from catalog.forms import FoodItemForm
 from catalog.models import MenuItem
 from core.forms import ImageAssetUploadForm
 from core.models import ImageAsset
@@ -71,8 +72,27 @@ def images(request):
     )
 
 
-def map_locations(request):
-    return render(request, "core/map.html")
+def menu(request):
+    if request.method == "POST":
+        if not is_eligible_user(request.user):
+            return redirect_to_eligible_login(request)
+        form = FoodItemForm(request.POST)
+        if form.is_valid():
+            food_item = form.save(commit=False)
+            food_item.submitted_by = request.user
+            food_item.save()
+            form.save_m2m()
+            return redirect("menu")
+    else:
+        form = FoodItemForm()
+    return render(
+        request,
+        "core/map.html",
+        {
+            "form": form,
+            "menu_items": MenuItem.objects.available_at(),
+        },
+    )
 
 
 def about(request):

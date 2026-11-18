@@ -20,7 +20,7 @@ This repository has a Django application foundation for Campus Cuisines. Read `i
 - `docs/`: living specifications and approved implementation plans, including
   `dish-reviews-plan.md`, `image-upload-plan.md`, `google-accounts-plan.md`,
   `navigation-pages-plan.md`, and storage-lifecycle decisions.
-- Restaurants, menu items, publishing endpoints, and other product models: not created yet. The public `/images/` page is a read-only gallery of already-published image assets.
+- Restaurants and publishing endpoints are not created yet. `catalog.FoodItem` stores reusable user-submitted dishes, and `catalog.MenuItem` stores recurring scheduled menu publications. The public `/images/` page is a read-only gallery of already-published image assets.
 - `requirements.in` / `requirements.txt` / `pyproject.toml`: reproducible Python toolchain and quality configuration.
 - `compose.yml`, `Dockerfile`, `.dockerignore`, `.env.example`: local Django/PostgreSQL/MinIO services and production-image configuration.
 - `scripts/`: configuration verifier and Compose smoke test.

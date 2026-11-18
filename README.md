@@ -2,7 +2,9 @@
 
 Campus Cuisines is a Django web application foundation for campus-food content. It
 includes a public landing page, shared responsive navigation, a deliberately minimal
-custom user model, and a reusable private image-asset workflow. The Reviews page
+custom user model, and a reusable private image-asset workflow. The Menu page
+publishes scheduled `MenuItem` records backed by reusable `FoodItem` records;
+eligible signed-in users can suggest FoodItems and staff schedule them. The Reviews page
 provides an anonymous dish-review MVP: anyone can submit a dish name, reviewer name,
 whole-star rating, and review, then see the newest reviews first. Explicit local debug
 mode also permits one optional image per review.
@@ -23,7 +25,7 @@ publish reviews or upload images.
 | `config/` | Django settings, routes, and WSGI/ASGI entry points |
 | `accounts/` | Google-only account journey, eligibility adapter, custom user model, and migrations |
 | `core/`, `templates/`, `static/` | Public homepage, reusable image-asset workflow, templates, and browser assets |
-| `announcements/` | Database-backed announcement panel, dismissal persistence, history page, and admin registration |
+| `catalog/` | Reusable FoodItem records, scheduled MenuItems, shared tags, forms, admin registration, and migrations |
 | `reviews/` | Public dish-review model, form, explicit image association, admin registration, and migrations |
 | `docs/` | Living implementation specifications, plans, and architecture decisions, including the [navigation pages plan](docs/navigation-pages-plan.md) and [dish reviews MVP plan](docs/dish-reviews-plan.md) |
 
@@ -149,10 +151,10 @@ CI runs Django checks, the full pytest suite against PostgreSQL, 70% coverage en
 ## Public pages
 
 The shared primary navigation links to Home (`/`), Reviews (`/reviews/`),
-Map/Locations (`/map/`), About Us (`/about/`), and Account (`/account/`). Home is a
+Menu (`/menu/`, with `/map/` retained as a compatibility route), About Us (`/about/`), and Account (`/account/`). Home is a
 landing page with a short recent-review preview. The full review form and feed live
-on Reviews. Map/Locations and Account are intentionally placeholder pages while
-their product requirements are developed.
+on Reviews. Account remains an intentionally placeholder page while its product
+requirements are developed.
 
 `/images/` is a direct, non-navigation route that displays only published,
 non-deleted image assets. Existing `/images/upload/` and `/images/<id>/` routes remain
