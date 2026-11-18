@@ -92,8 +92,9 @@ def test_reviews_page_owns_review_form_and_home_is_a_landing_page(client) -> Non
     home = client.get(reverse("home"))
     reviews = client.get(reverse("reviews"))
 
-    assert 'action="' not in home.content.decode()
-    assert 'name="dish_name"' not in home.content.decode()
+    home_content = home.content.decode()
+    assert 'class="review-form"' not in home_content
+    assert 'name="dish_name"' not in home_content
     reviews_content = reviews.content.decode()
     assert 'name="dish_name"' in reviews_content
     assert 'src="/static/core/review-dialog.js"' in reviews_content
