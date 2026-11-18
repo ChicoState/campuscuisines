@@ -308,6 +308,12 @@ def test_announcement_can_be_dismissed_from_the_heading(
         browser.close()
 
 
+@pytest.mark.browser
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.skipif(
+    os.getenv("RUN_BROWSER_TESTS") != "true",
+    reason="Set RUN_BROWSER_TESTS=true after installing Chromium.",
+)
 def test_report_dialog_requires_confirmation_and_is_hidden_when_logged_out(
     live_server, client
 ) -> None:
